@@ -25,7 +25,6 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import org.bukkit.plugin.Plugin;
 
 /**
  * Instantiable SQLite connector
@@ -41,39 +40,6 @@ public class SQLite implements SQLDataType {
     /** The {@link Connection} object */
     protected Connection con = null;
     private boolean errors = true;
-
-    /**
-     * Opens a connection to the SQLite database. Make sure to call
-     * {@link SQLite#close()} after you are finished working with the database
-     * for your segment of your code.
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param plugin The {@link Plugin} with the data folder to use
-     * @return The established {@link Connection}
-     * @throws SQLException If the connection fails to open
-     */
-    public Connection open(Plugin plugin) throws SQLException {
-        return this.open(plugin, "database");
-    }
-
-    /**
-     * Opens a connection to the SQLite database. Make sure to call
-     * {@link SQLite#close()} after you are finished working with the database
-     * for your segment of your code.
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param plugin The {@link Plugin} with the data folder to use
-     * @param name The name of the database file
-     * @return The established {@link Connection}
-     * @throws SQLException If the connection fails to open
-     */
-    public Connection open(Plugin plugin, String name) throws SQLException {
-        return this.open(plugin.getDataFolder(), name);
-    }
 
     /**
      * Opens a connection to the SQLite database. Make sure to call
