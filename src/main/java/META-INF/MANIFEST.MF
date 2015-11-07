@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Class-Path: hamcrest-core-1.1.jar junit-4.10.jar Vault-1.5.2.jar persi
+ stence-api-1.0.jar json-simple-1.1.1.jar snakeyaml-1.14.jar guava-17.
+ 0.jar metrics-R8-20150522.102737-8.jar bukkit-1.8-R0.1-20150227.22471
+ 4-194.jar ebean-2.8.1.jar commons-lang-2.6.jar
+Main-Class: 
+
