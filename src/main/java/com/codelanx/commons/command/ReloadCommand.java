@@ -17,12 +17,12 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.lost.command;
+package com.codelanx.commons.command;
 
 import com.codelanx.commons.lost.internal.InternalLang;
 import com.codelanx.commons.config.Lang;
 import com.codelanx.commons.lost.events.ReloadEvent;
-import com.codelanx.commons.implementers.Reloadable;
+import com.codelanx.commons.lost.implementers.Reloadable;
 
 import java.util.List;
 import org.bukkit.command.CommandSender;

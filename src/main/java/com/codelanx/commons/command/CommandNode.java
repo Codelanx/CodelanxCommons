@@ -17,11 +17,11 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.lost.command;
+package com.codelanx.commons.command;
 
 import com.codelanx.commons.config.Lang;
 import com.codelanx.commons.logging.Debugger;
-import com.codelanx.commons.permission.Permissions;
+import com.codelanx.commons.lost.permission.Permissions;
 import com.codelanx.commons.util.Lambdas;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.util.exception.Exceptions;

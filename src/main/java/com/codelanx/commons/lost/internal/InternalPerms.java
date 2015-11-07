@@ -19,7 +19,7 @@
  */
 package com.codelanx.commons.lost.internal;
 
-import com.codelanx.commons.permission.Permissions;
+import com.codelanx.commons.lost.permission.Permissions;
 
 /**
  * Internal {@link Permissions} enum for CodelanxLib

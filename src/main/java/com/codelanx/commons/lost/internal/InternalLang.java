@@ -25,8 +25,8 @@ import com.codelanx.commons.config.RelativePath;
 import com.codelanx.commons.config.Lang;
 import com.codelanx.commons.data.types.Yaml;
 import com.codelanx.commons.util.Paginator;
-import com.codelanx.commons.lost.command.HelpCommand;
-import com.codelanx.commons.lost.command.ReloadCommand; //Used in javadocs
+import com.codelanx.commons.command.HelpCommand;
+import com.codelanx.commons.command.ReloadCommand; //Used in javadocs
 import com.codelanx.commons.config.DataHolder;
 
 /**

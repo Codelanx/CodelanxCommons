@@ -17,7 +17,7 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.lost.command;
+package com.codelanx.commons.command;
 
 import com.codelanx.commons.lost.internal.InternalLang;
 import com.codelanx.commons.config.Lang;

@@ -1,7 +1,7 @@
 package com.codelanx.commons.lost.config;
 
 import com.codelanx.commons.config.Lang;
-import com.codelanx.commons.implementers.Formatted;
+import com.codelanx.commons.lost.implementers.Formatted;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;

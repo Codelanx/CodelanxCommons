@@ -19,7 +19,7 @@
  */
 package com.codelanx.commons.lost.events;
 
-import com.codelanx.commons.lost.command.ReloadCommand;
+import com.codelanx.commons.command.ReloadCommand;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;

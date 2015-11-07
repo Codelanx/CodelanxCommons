@@ -17,7 +17,7 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.implementers;
+package com.codelanx.commons.lost.implementers;
 
 import com.codelanx.commons.lost.econ.CEconomy;
 

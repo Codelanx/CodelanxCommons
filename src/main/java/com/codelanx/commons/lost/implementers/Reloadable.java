@@ -17,27 +17,24 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.implementers;
-
-import com.codelanx.commons.config.Lang;
+package com.codelanx.commons.lost.implementers;
 
 /**
- * Describes a plugin with a message format
+ * Represents a plugin that is capable of being reloaded
  *
  * @since 0.1.0
  * @author 1Rogue
  * @version 0.1.0
  */
-public interface Formatted {
+public interface Reloadable {
 
     /**
-     * The {@link Lang} format to use for any plugin output
+     * Method that is called upon reloading of the plugin. If using a
+     * ReloadEvent, then this method is not required
      * 
      * @since 0.1.0
      * @version 0.1.0
-     * 
-     * @return The {@link Lang} object to use for plugin output as a format
      */
-    public Lang getFormat();
+    public void reload();
 
 }

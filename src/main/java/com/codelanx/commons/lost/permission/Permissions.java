@@ -17,7 +17,7 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.permission;
+package com.codelanx.commons.lost.permission;
 
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
