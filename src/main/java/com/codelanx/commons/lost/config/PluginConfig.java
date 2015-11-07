@@ -1,5 +1,8 @@
-package com.codelanx.commons.config;
+package com.codelanx.commons.lost.config;
 
+import com.codelanx.commons.config.Config;
+import com.codelanx.commons.config.DataHolder;
+import com.codelanx.commons.config.RelativePath;
 import com.codelanx.commons.data.FileDataType;
 import com.codelanx.commons.data.types.Yaml;
 
@@ -33,11 +36,12 @@ public enum PluginConfig implements Config {
 
     @Override
     public DataHolder<? extends FileDataType> getData() {
-        return null;
+        return DATA;
     }
 
     @Override
     public File getFileLocation() {
+        //TODO: Return plugin from stack for path
         return null;
     }
 }

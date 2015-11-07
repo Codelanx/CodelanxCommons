@@ -19,7 +19,6 @@
  */
 package com.codelanx.commons.config;
 
-import com.codelanx.commons.CodelanxLib;
 import com.codelanx.commons.data.types.Yaml;
 import com.codelanx.commons.internal.InternalLang;
 
@@ -30,8 +29,7 @@ import com.codelanx.commons.internal.InternalLang;
  * @author 1Rogue
  * @version 1.0.0
  */
-@PluginClass(CodelanxLib.class)
-@RelativePath("defaults.yml")
+@RelativePath("lang-defaults.yml")
 public enum DefaultLang implements Lang {
 
     PLAYER_NOT_ONLINE("player.not-online", "&9%s&f is not online!"),

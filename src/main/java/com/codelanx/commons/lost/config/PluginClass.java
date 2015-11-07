@@ -17,11 +17,12 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.config;
+package com.codelanx.commons.lost.config;
+
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * An annotation for relaying the primary class of the {@link JavaPlugin}

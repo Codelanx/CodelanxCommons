@@ -24,8 +24,7 @@ import com.codelanx.commons.util.Reflections;
 import com.google.common.primitives.Primitives;
 import java.util.Collection;
 import java.util.Map;
-import org.apache.commons.lang.Validate;
-import org.bukkit.configuration.ConfigurationSection;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Represents a single value that is dynamically retrieved from a
@@ -36,7 +35,7 @@ import org.bukkit.configuration.ConfigurationSection;
  * @author 1Rogue
  * @version 0.1.0
  */
-public interface Config extends PluginFile {
+public interface Config extends ConfigFile {
 
     /**
      * Attempts to return the {@link Config} value as a casted type. If the
@@ -165,34 +164,6 @@ public interface Config extends PluginFile {
     }
 
     /**
-     * Returns a {@link Map} representative of the passed Object that represents
-     * a section of a YAML file. This method neglects the implementation of the
-     * section (whether it be {@link ConfigurationSection} or just a
-     * {@link Map}), and returns the appropriate value.
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param o The object to interpret
-     * @return A {@link Map} representing the section
-     */
-    @SuppressWarnings("unchecked")
-    public static Map<String, Object> getConfigSectionValue(Object o) {
-        if (o == null) {
-            return null;
-        }
-        Map<String, Object> map;
-        if (o instanceof ConfigurationSection) {
-            map = ((ConfigurationSection) o).getValues(false);
-        } else if (o instanceof Map) {
-            map = (Map<String, Object>) o;
-        } else {
-            return null;
-        }
-        return map;
-    }
-
-    /**
      * Retrieves an anonymous value which can utilize a
      * {@link Config} parameter to retrieve data from any source
      * 
@@ -226,7 +197,7 @@ public interface Config extends PluginFile {
 
             @Override
             public DataHolder<FileDataType> getData() {
-                throw new UnsupportedOperationException("Anonymous PluginFile classes do not have DataHolders");
+                throw new UnsupportedOperationException("Anonymous ConfigFile classes do not have DataHolders");
             }
             
         };

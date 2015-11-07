@@ -22,6 +22,8 @@ package com.codelanx.commons.config;
 import com.codelanx.commons.data.FileDataType;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.logging.Debugger;
+import com.codelanx.commons.util.exception.Exceptions;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,30 +36,7 @@ import java.util.Arrays;
  * @author 1Rogue
  * @version 0.1.0
  */
-public interface PluginFile {
-
-    /**
-     * Returns the save location for passed {@link PluginFile} argument
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param clazz An implementing class with the {@link PluginClass} and
-     *              {@link RelativePath} annotations
-     * @return A {@link File} pointing to the location containing saved values
-     *           for this configuration type
-     */
-    public static File getFileLocation(Class<? extends PluginFile> clazz) {
-        if (!(Reflections.hasAnnotation(clazz, PluginClass.class)
-                && Reflections.hasAnnotation(clazz, RelativePath.class))) {
-            throw new IllegalStateException("'" + clazz.getName() + "' is missing either PluginClass or RelativePath annotations");
-        }
-        File folder = Reflections.getPlugin(clazz).getDataFolder();
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
-        return new File(folder, clazz.getAnnotation(RelativePath.class).value());
-    }
+public interface ConfigFile {
 
     /**
      * The {@link FileDataType} path to store this value in
@@ -110,16 +89,19 @@ public interface PluginFile {
      * @since 0.1.0
      * @version 0.1.0
      * 
-     * @return The {@link DataHolder} for this {@link PluginFile}
+     * @return The {@link DataHolder} for this {@link ConfigFile}
      */
     public DataHolder<? extends FileDataType> getData();
 
     default public File getFileLocation() {
-        return PluginFile.getFileLocation(this.getClass());
+        Class<? extends ConfigFile> clazz = this.getClass();
+        Exceptions.illegalState(Reflections.hasAnnotation(clazz, RelativePath.class),
+                "'" + clazz.getName() + "' is missing either PluginClass or RelativePath annotations");
+        return new File(clazz.getAnnotation(RelativePath.class).value());
     }
 
     /**
-     * Loads the {@link PluginFile} values from the configuration file.
+     * Loads the {@link ConfigFile} values from the configuration file.
      * Safe to use for reloading
      *
      * @since 0.1.0
@@ -130,13 +112,13 @@ public interface PluginFile {
      * @return The relevant {@link FileDataType} for all the file info
      */
     default public <T extends FileDataType> T init(Class<T> clazz) {
-        Class<? extends PluginFile> me = this.getClass();
+        Class<? extends ConfigFile> me = this.getClass();
         //Get fields
-        Iterable<? extends PluginFile> itr;
+        Iterable<? extends ConfigFile> itr;
         if (me.isEnum()) {
             itr = Arrays.asList(me.getEnumConstants());
         } else if (Iterable.class.isAssignableFrom(me)) {
-            itr = ((Iterable<? extends PluginFile>) this);
+            itr = ((Iterable<? extends ConfigFile>) this);
         } else {
             throw new IllegalStateException("'" + me.getName() + "' is neither an enum nor an Iterable");
         }
@@ -149,7 +131,7 @@ public interface PluginFile {
                 ref.createNewFile();
             }
             FileDataType use = FileDataType.newInstance(clazz, ref);
-            for (PluginFile l : itr) {
+            for (ConfigFile l : itr) {
                 if (!use.isSet(l.getPath())) {
                     use.set(l.getPath(), l.getDefault());
                 }
