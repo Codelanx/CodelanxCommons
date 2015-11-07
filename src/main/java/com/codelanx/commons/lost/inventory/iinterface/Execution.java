@@ -17,28 +17,30 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.implementers;
+package com.codelanx.commons.lost.inventory.iinterface;
 
-import com.codelanx.commons.lost.econ.CEconomy;
+import org.bukkit.entity.Player;
 
 /**
- * Represents a plugin that utilizes the {@link CEconomy} class
+ * Represents the actions to be taken upon clicking a {@link MenuIcon}
  *
  * @since 0.0.1
  * @author 1Rogue
  * @version 0.0.1
  */
-public interface Economics extends Formatted {
+@FunctionalInterface
+public interface Execution {
 
-     /**
-     * Gets the {@link CEconomy} for the plugin, which represents a facade
-     * interface for charging players money
+    /**
+     * Called when a {@link MenuIcon} is clicked
      * 
      * @since 0.0.1
      * @version 0.0.1
      * 
-     * @return The {@link CEconomy} instance
+     * @param p The {@link Player} who clicked the icon
+     * @param ii The {@link InventoryInterface} this icon belongs to
+     * @param icon The {@link MenuIcon} that was clicked
      */
-    public CEconomy getEconomy();
+    public void onExec(Player p, InventoryInterface ii, MenuIcon icon);
 
 }

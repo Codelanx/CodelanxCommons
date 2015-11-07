@@ -21,7 +21,7 @@ package com.codelanx.commons.logging;
 
 import com.codelanx.commons.util.exception.Exceptions;
 import com.codelanx.commons.CodelanxLib;
-import com.codelanx.commons.listener.ListenerManager;
+import com.codelanx.commons.lost.listener.ListenerManager;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.util.Scheduler;
 import com.codelanx.commons.util.exception.IllegalPluginAccessException;

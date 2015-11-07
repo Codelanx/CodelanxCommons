@@ -20,7 +20,7 @@
 package com.codelanx.commons.config;
 
 import com.codelanx.commons.data.types.Yaml;
-import com.codelanx.commons.internal.InternalLang;
+import com.codelanx.commons.lost.internal.InternalLang;
 
 /**
  * Class description for {@link DefaultLang}

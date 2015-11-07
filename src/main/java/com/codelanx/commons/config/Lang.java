@@ -20,7 +20,7 @@
 package com.codelanx.commons.config;
 
 import com.codelanx.commons.data.FileDataType;
-import com.codelanx.commons.internal.InternalLang;
+import com.codelanx.commons.lost.internal.InternalLang;
 
 /**
  * Represents a single value that is dynamically retrieved from a

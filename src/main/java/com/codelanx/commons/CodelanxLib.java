@@ -19,8 +19,8 @@
  */
 package com.codelanx.commons;
 
-import com.codelanx.commons.econ.VaultProxyListener;
-import com.codelanx.commons.listener.ListenerManager;
+import com.codelanx.commons.lost.econ.VaultProxyListener;
+import com.codelanx.commons.lost.listener.ListenerManager;
 import com.codelanx.commons.logging.Debugger;
 import com.codelanx.commons.serialize.SerializationFactory;
 import com.codelanx.commons.util.Reflections;

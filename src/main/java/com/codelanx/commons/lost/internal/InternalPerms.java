@@ -17,28 +17,42 @@
  * You should have received a copy of the Creative Commons BY-NC-ND license
  * long with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.codelanx.commons.implementers;
+package com.codelanx.commons.lost.internal;
 
-import com.codelanx.commons.lost.econ.CEconomy;
+import com.codelanx.commons.permission.Permissions;
 
 /**
- * Represents a plugin that utilizes the {@link CEconomy} class
+ * Internal {@link Permissions} enum for CodelanxLib
  *
- * @since 0.0.1
+ * @since 0.1.0
  * @author 1Rogue
- * @version 0.0.1
+ * @version 0.1.0
  */
-public interface Economics extends Formatted {
+public enum InternalPerms implements Permissions {
 
-     /**
-     * Gets the {@link CEconomy} for the plugin, which represents a facade
-     * interface for charging players money
+    /**
+     * Allows bypassing protection provided by the
+     * {@link com.codelanx.commons.util.Protections Protections} class
      * 
-     * @since 0.0.1
-     * @version 0.0.1
-     * 
-     * @return The {@link CEconomy} instance
+     * @since 0.1.0
+     * @version 0.1.0
      */
-    public CEconomy getEconomy();
+    PROTECTION_OVERRIDE("protect.override");
+
+    private final String permission;
+
+    private InternalPerms(String permission) {
+        this.permission = permission;
+    }
+
+    @Override
+    public String getBase() {
+        return "commons";
+    }
+
+    @Override
+    public String getNode() {
+        return this.permission;
+    }
 
 }
