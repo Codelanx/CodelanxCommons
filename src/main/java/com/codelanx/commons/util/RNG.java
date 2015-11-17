@@ -44,8 +44,7 @@ public final class RNG {
     private RNG() {}
 
     /**
-     * A simple {@link Random} instance, should only be used on Bukkit's main
-     * thread
+     * A simple {@link Random} instance, should only be used on the program's main thread
      * 
      * @since 0.1.0
      * @version 0.1.0
