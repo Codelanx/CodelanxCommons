@@ -26,7 +26,7 @@ import java.util.logging.Level;
 
 /**
  * A utility class for throwing conditional exceptions, similar to Apache's
- * {@link org.apache.commons.lang.Validate Validate} class.
+ * {@link org.apache.commons.lang3.Validate Validate} class.
  *
  * @since 0.1.0
  * @author 1Rogue

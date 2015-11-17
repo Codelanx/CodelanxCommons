@@ -20,8 +20,8 @@
 package com.codelanx.commons.logging;
 
 import com.codelanx.commons.util.exception.Exceptions;
-import com.codelanx.commons.CodelanxLib;
-import com.codelanx.commons.lost.listener.ListenerManager;
+import com.codelanx.integration.CodelanxLib;
+import com.codelanx.integration.listener.ListenerManager;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.util.Scheduler;
 import com.codelanx.commons.util.exception.IllegalPluginAccessException;
@@ -35,6 +35,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+
+import com.codelanx.integration.util.ReflectBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.event.EventHandler;
@@ -63,7 +65,7 @@ public final class Debugger {
     private Debugger() {}
 
     private static DebugOpts getOpts() {
-        Plugin p = Reflections.getCallingPlugin(1);
+        Plugin p = ReflectBukkit.getCallingPlugin(1);
         return Debugger.getOpts(p);
     }
 

@@ -19,7 +19,7 @@
  */
 package com.codelanx.commons.util;
 
-import com.codelanx.commons.CodelanxLib;
+import com.codelanx.integration.CodelanxLib;
 import com.codelanx.commons.logging.Debugger;
 import java.util.ArrayList;
 import java.util.List;

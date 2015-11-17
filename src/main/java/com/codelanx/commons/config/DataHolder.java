@@ -23,8 +23,8 @@ import com.codelanx.commons.data.FileDataType;
 
 /**
  * Holds a reference to a {@link FileDataType} and initializes it upon the first
- * calling. This is meant for adding thread-safety to {@link ConfigFile} calls
- * to {@link ConfigFile#getConfig()} for the initialization of the underlying
+ * calling. This is meant for adding thread-safety to {@link InfoFile} calls
+ * to {@link InfoFile#getConfig()} for the initialization of the underlying
  * {@link FileDataType} (thread-safe lazy initialization)
  *
  * @since 0.1.0
@@ -56,10 +56,10 @@ public class DataHolder<D extends FileDataType> {
      * @since 0.1.0
      * @version 0.1.0
      * 
-     * @param source The {@link ConfigFile} calling this method
+     * @param source The {@link InfoFile} calling this method
      * @return The initialized {@link FileDataType}
      */
-    public D get(ConfigFile source) {
+    public D get(InfoFile source) {
         if (this.value == null) {
             synchronized (this) {
                 if (this.value == null) {

@@ -19,7 +19,7 @@
  */
 package com.codelanx.commons.data.types;
 
-import com.codelanx.commons.config.Config;
+import com.codelanx.commons.config.ConfigFile;
 import com.codelanx.commons.data.SQLDataType;
 import com.codelanx.commons.logging.Debugger;
 import com.codelanx.commons.util.cache.Cache;
@@ -251,7 +251,7 @@ public class MySQL implements SQLDataType {
         }
 
         /**
-         * Class constructor. Takes {@link Config Configs} that are string-types
+         * Class constructor. Takes {@link ConfigFile Configs} that are string-types
          * (The {@code port} parameter can be an int or string) and retrieves
          * the appropriate values for them
          * 
@@ -264,7 +264,7 @@ public class MySQL implements SQLDataType {
          * @param database The database to use in the cluster
          * @param port The port of the database
          */
-        public ConnectionPrefs(Config host, Config user, Config pass, Config database, Config port) {
+        public ConnectionPrefs(ConfigFile host, ConfigFile user, ConfigFile pass, ConfigFile database, ConfigFile port) {
             this.host = host.as(String.class);
             this.user = user.as(String.class);
             this.pass = pass.as(String.class).toCharArray();

@@ -21,152 +21,200 @@ package com.codelanx.commons.config;
 
 import com.codelanx.commons.data.FileDataType;
 import com.codelanx.commons.util.Reflections;
-import com.codelanx.commons.logging.Debugger;
-import com.codelanx.commons.util.exception.Exceptions;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
+import com.google.common.primitives.Primitives;
+import java.util.Collection;
+import java.util.Map;
+import org.apache.commons.lang3.Validate;
 
 /**
- * Represents a file containing mappings that is owned by a plugin, and can
- * be automatically initialized
+ * Represents a single value that is dynamically retrieved from a
+ * {@link FileDataType}. This value can be of any type, and the class should
+ * typically be implemented through an enum
  *
  * @since 0.1.0
  * @author 1Rogue
  * @version 0.1.0
  */
-public interface ConfigFile {
+public interface ConfigFile extends InfoFile {
 
     /**
-     * The {@link FileDataType} path to store this value in
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @return The path to the file value
-     */
-    public String getPath();
-
-    /**
-     * Returns the default value of the key
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @return The key's default value
-     */
-    public Object getDefault();
-
-    /**
-     * Returns the relevant {@link FileDataType} for this file.
+     * Attempts to return the {@link ConfigFile} value as a casted type. If the
+     * value cannot be casted it will attempt to return the default value. If
+     * the default value is inappropriate for the class, the method will
+     * throw a {@link ClassCastException}.
      * 
      * @since 0.1.0
      * @version 0.1.0
      * 
-     * @return The internal {@link FileDataType} of this {@link Config}
+     * @param <T> The type of the casting class
+     * @param c The class type to cast to
+     * @return A casted value, or {@code null} if unable to cast. If the passed
+     *         class parameter is of a primitive type or autoboxed primitive,
+     *         then a casted value of -1 is returned, or {@code false} for
+     *         booleans. If the passed class parameter is for {@link String},
+     *         then {@link Object#toString()} is called on the value instead
      */
-    default public FileDataType getConfig() {
-        return this.getData().get(this);
-    }
-
-    /**
-     * Gets the current object in memory
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @return The Object found at the relevant location
-     */
-    default public Object get() {
-        return this.getConfig().get(this.getPath(), this.getDefault());
-    }
-
-    /**
-     * Returns the relevant {@link DataHolder} for this file, which provides
-     * thread-safety for the {@link FileDataType} object initialization
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @return The {@link DataHolder} for this {@link ConfigFile}
-     */
-    public DataHolder<? extends FileDataType> getData();
-
-    default public File getFileLocation() {
-        Class<? extends ConfigFile> clazz = this.getClass();
-        Exceptions.illegalState(Reflections.hasAnnotation(clazz, RelativePath.class),
-                "'" + clazz.getName() + "' is missing either PluginClass or RelativePath annotations");
-        return new File(clazz.getAnnotation(RelativePath.class).value());
-    }
-
-    /**
-     * Loads the {@link ConfigFile} values from the configuration file.
-     * Safe to use for reloading
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param <T> The type of {@link FileDataType} to return
-     * @param clazz The {@link Class} of the returned {@link FileDataType}
-     * @return The relevant {@link FileDataType} for all the file info
-     */
-    default public <T extends FileDataType> T init(Class<T> clazz) {
-        Class<? extends ConfigFile> me = this.getClass();
-        //Get fields
-        Iterable<? extends ConfigFile> itr;
-        if (me.isEnum()) {
-            itr = Arrays.asList(me.getEnumConstants());
-        } else if (Iterable.class.isAssignableFrom(me)) {
-            itr = ((Iterable<? extends ConfigFile>) this);
-        } else {
-            throw new IllegalStateException("'" + me.getName() + "' is neither an enum nor an Iterable");
+    default public <T> T as(Class<T> c) {
+        Validate.notNull(c, "Cannot cast to null");
+        Validate.isTrue(Primitives.unwrap(c) != void.class, "Cannot cast to a void type");
+        boolean primitive = Primitives.isWrapperType(c) || Primitives.isWrapperType(Primitives.wrap(c));
+        Object o = this.get();
+        if (primitive) {
+            T back;
+            if (o == null) {
+                return Reflections.defaultPrimitiveValue(c);
+            } else {
+                back = Primitives.wrap(c).cast(o);
+            }
+            return back;
         }
-        //Initialize file
-        String path = null;
-        try {
-            File ref = this.getFileLocation();
-            path = ref.getPath();
-            if (!ref.exists()) {
-                ref.createNewFile();
-            }
-            FileDataType use = FileDataType.newInstance(clazz, ref);
-            for (ConfigFile l : itr) {
-                if (!use.isSet(l.getPath())) {
-                    use.set(l.getPath(), l.getDefault());
-                }
-            }
-            use.save();
-            return (T) use;
-        } catch (IOException ex) {
-            Debugger.error(ex, "Error creating plugin file '%s'", path);
+        if (o == null) {
             return null;
         }
+        if (c == String.class) {
+            return (T) String.valueOf(o);
+        }
+        if (c.isInstance(o)) {
+            return c.cast(o);
+        }
+        if (c.isInstance(this.getDefault())) {
+            return c.cast(this.getDefault());
+        }
+        throw new ClassCastException("Unable to cast config value");
     }
 
     /**
-     * Saves the current file data from memory
-     *
+     * Attempts to return the {@link ConfigFile} value as a casted type. If the
+     * value cannot be casted it will attempt to return the default value. If
+     * the default value is inappropriate for the class, the method will
+     * throw a {@link ClassCastException}. This exception is also throwing if
+     * the type used for the members contained within the collection are
+     * incorrect
+     * 
      * @since 0.1.0
      * @version 0.1.0
      * 
-     * @throws IOException Failed to save to the file
+     * @param <T> The type of the casting class
+     * @param <G> The type of the collection's contents
+     * @param collection The collection type to cast to
+     * @param type The generic bounding for the collection
+     * @return A casted value, or {@code null} if unable to cast. If the passed
+     *         class parameter is of a primitive type or autoboxed primitive,
+     *         then a casted value of -1 is returned, or {@code false} for
+     *         booleans. If the passed class parameter is for {@link String},
+     *         then {@link Object#toString()} is called on the value instead
      */
-    default public void save() throws IOException {
-        this.save(this.getFileLocation());
+    @SuppressWarnings("rawtypes")
+    default public <G, T extends Collection<G>> T as(Class<? extends Collection> collection, Class<G> type) {
+        Collection<G> col = this.as(collection);
+        for (Object o : col) {
+            if (!type.isInstance(o)) {
+                throw new ClassCastException("Inappropriate generic type for collection");
+            }
+        }
+        return (T) col;
     }
 
     /**
-     * Saves the current file data from memory to a specific {@link File}
-     *
+     * Attempts to return the {@link ConfigFile} value as a casted type. If the
+     * value cannot be casted it will attempt to return the default value. If
+     * the default value is inappropriate for the class, the method will
+     * throw a {@link ClassCastException}. This exception is also throwing if
+     * the type used for the members contained within the collection are
+     * incorrect
+     * 
      * @since 0.1.0
      * @version 0.1.0
      * 
-     * @param file The file to save to
-     * @throws IOException Failed to save to the file
+     * @param <K> The type of the keys for this map
+     * @param <V> The type of the values for this map
+     * @param <M> The type of the map
+     * @param map The class object of the map type to use
+     * @param key The class object of the key types
+     * @param value The class object of the value types
+     * @return A casted value, or {@code null} if unable to cast. If the passed
+     *         class parameter is of a primitive type or autoboxed primitive,
+     *         then a casted value of -1 is returned, or {@code false} for
+     *         booleans. If the passed class parameter is for {@link String},
+     *         then {@link Object#toString()} is called on the value instead
      */
-    default public void save(File file) throws IOException {
-        this.getConfig().save();
+    @SuppressWarnings("rawtypes")
+    default public <K, V, M extends Map<K, V>> M as(Class<? extends Map> map, Class<K> key, Class<V> value) {
+        Map<?, ?> m = this.as(map);
+        for (Map.Entry<?, ?> ent : m.entrySet()) {
+            if (!key.isInstance(ent.getKey()) || !value.isInstance(ent.getValue())) {
+                throw new ClassCastException("Inappropriate generic types for map");
+            }
+        }
+        return (M) m;
+    }
+
+    /**
+     * Sets a value in the {@link FileDataType}
+     * 
+     * @since 0.1.0
+     * @version 0.1.0
+     * 
+     * @param val The value to set
+     * @return The previous {@link ConfigFile} value
+     */
+    default public ConfigFile set(Object val) {
+        this.getConfig().set(this.getPath(), val);
+        return this;
+    }
+
+    /**
+     * Retrieves an anonymous value which can utilize a
+     * {@link ConfigFile} parameter to retrieve data from any source
+     * 
+     * @since 0.1.0
+     * @version 0.1.0
+     * 
+     * @param <T> Represents a {@link FileDataType} passed to the method
+     * @param file The {@link FileDataType} to use
+     * @param config The {@link ConfigFile} value to search with
+     * @return An anonymous class wrapping of the configuration and keys
+     */
+    public static <T extends FileDataType> ConfigFile retrieve(T file, ConfigFile config) {
+        Validate.notNull(file, "File cannot be null");
+        Validate.notNull(config, "Config cannot be null");
+        return new ConfigFile() {
+
+            @Override
+            public String getPath() {
+                return config.getPath();
+            }
+
+            @Override
+            public Object getDefault() {
+                return config.getDefault();
+            }
+
+            @Override
+            public T getConfig() {
+                return file;
+            }
+
+            @Override
+            public DataHolder<FileDataType> getData() {
+                throw new UnsupportedOperationException("Anonymous ConfigFile classes do not have DataHolders");
+            }
+            
+        };
+    }
+
+    /**
+     * Facade method for {@link ConfigFile#retrieve(FileDataType, ConfigFile)}
+     * 
+     * @since 0.1.0
+     * @version 0.1.0
+     * 
+     * @param t A {@link FileDataType} to retrieve this config value from
+     * @see ConfigFile#retrieve(FileDataType, ConfigFile)
+     * @return A config value that can be used to retrieve values from
+     */
+    default public ConfigFile retrieve(FileDataType t) {
+        return ConfigFile.retrieve(t, this);
     }
 
 }

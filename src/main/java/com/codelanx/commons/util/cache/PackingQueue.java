@@ -22,7 +22,7 @@ package com.codelanx.commons.util.cache;
 import com.codelanx.commons.util.Scheduler;
 import java.util.LinkedList;
 import java.util.function.Consumer;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Represents a queue which flushes all of its elements upon reaching a maximum

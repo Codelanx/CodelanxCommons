@@ -19,11 +19,12 @@
  */
 package com.codelanx.commons.util;
 
-import com.codelanx.commons.config.PluginClass;
 import com.codelanx.commons.logging.Debugger;
 import com.codelanx.commons.logging.Logging;
 import com.codelanx.commons.util.exception.Exceptions;
 import com.google.common.primitives.Primitives;
+import org.apache.commons.lang3.Validate;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,10 +44,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import org.apache.commons.lang.Validate;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Represents utility functions that utilize either java's reflection api,
@@ -61,25 +58,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class Reflections {
 
     private Reflections() {
-    }
-
-    /**
-     * Returns the relevant {@link JavaPlugin} that is specified by a
-     * class-level {@link PluginClass} annotation if it is loaded, otherwise
-     * {@code null}
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param clazz The {@link Class} that holds the {@link Annotation}
-     * @return The relevant {@link JavaPlugin}, or {@code null} if not found
-     */
-    public static JavaPlugin getPlugin(Class<?> clazz) {
-        PluginClass pc = clazz.getAnnotation(PluginClass.class);
-        if (pc == null) {
-            return null;
-        }
-        return JavaPlugin.getPlugin(pc.value());
     }
 
     /**
@@ -126,66 +104,6 @@ public final class Reflections {
      */
     public static boolean accessedFrom(Class<?> clazz) {
         return Reflections.getCaller(1).getClassName().equals(clazz.getName());
-    }
-
-    /**
-     * Façade method for determining if Bukkit is the invoker of the method
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @return {@code true} if Bukkit is the direct invoker of the method
-     */
-    public static boolean accessedFromBukkit() {
-        return Reflections.getCaller(1).getClassName().startsWith("org.bukkit.");
-    }
-
-    /**
-     * Returns the {@link JavaPlugin} that immediately called the method in the
-     * current context. Useful for finding out which plugins accessed static API
-     * methods
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param offset The number of additional methods to look back
-     * @return The relevant {@link JavaPlugin}
-     * @throws UnsupportedOperationException If not called from a
-     * {@link JavaPlugin} class (either through an alternative ClassLoader,
-     * executing code directly, or some voodoo magic)
-     */
-    public static JavaPlugin getCallingPlugin(int offset) {
-        try {
-            Class<?> cl = Class.forName(Reflections.getCaller(1 + offset).getClassName());
-            JavaPlugin back = JavaPlugin.getProvidingPlugin(cl);
-            if (back == null) {
-                throw new UnsupportedOperationException("Must be called from a class loaded from a plugin");
-            }
-            return back;
-        } catch (ClassNotFoundException ex) {
-            //Potentially dangerous (Stackoverflow)
-            Debugger.error(ex,  "Error reflecting for plugin class");
-        }
-        return null;
-    }
-
-    /**
-     * Returns the {@link JavaPlugin} that immediately called the method in the
-     * current context. Useful for finding out which plugins accessed static API
-     * methods. This method is equivalent to calling
-     * {@code Reflections.getCallingPlugin(0)}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @see Reflections#getCallingPlugin(int)
-     * @return The relevant {@link JavaPlugin}
-     * @throws UnsupportedOperationException If not called from a
-     * {@link JavaPlugin} class (either through an alternative ClassLoader,
-     * executing code directly, or some voodoo magic)
-     */
-    public static JavaPlugin getCallingPlugin() {
-        return Reflections.getCallingPlugin(1);
     }
 
     /**
@@ -357,19 +275,6 @@ public final class Reflections {
      */
     public static <T> List<T> nonFixedList(T... items) {
         return new ArrayList<>(Arrays.asList(items));
-    }
-
-    /**
-     * Gets the default {@link World} loaded by Bukkit
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @return Bukkit's default {@link World} object
-     */
-    public static World getDefaultWorld() {
-        Exceptions.illegalState(!Bukkit.getServer().getWorlds().isEmpty(), "No worlds loaded");
-        return Bukkit.getServer().getWorlds().get(0);
     }
 
     /**
