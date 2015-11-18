@@ -97,7 +97,7 @@ public interface InfoFile {
     default public File getFileLocation() {
         Class<? extends InfoFile> clazz = this.getClass();
         Exceptions.illegalState(Reflections.hasAnnotation(clazz, RelativePath.class),
-                "'" + clazz.getName() + "' is missing either PluginClass or RelativePath annotations");
+                "'" + clazz.getName() + "' is missing the RelativePath annotation");
         return new File(clazz.getAnnotation(RelativePath.class).value());
     }
 
