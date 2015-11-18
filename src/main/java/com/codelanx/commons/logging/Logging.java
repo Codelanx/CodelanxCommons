@@ -20,8 +20,9 @@
 package com.codelanx.commons.logging;
 
 import com.codelanx.commons.util.Reflections;
-import com.codelanx.integration.util.ReflectBukkit;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 import java.util.logging.Filter;
@@ -40,6 +41,10 @@ import java.util.logging.Logger;
  * @version 0.1.0
  */
 public final class Logging {
+
+    private static final Map<Logger, LoggingFacade> FACADES = new HashMap<>();
+    private static final Logger LOG = Logger.getLogger(Logging.class.getSimpleName());
+    private static Supplier<Logger> NAB = () -> LOG;
 
     private Logging() {}
 
@@ -66,7 +71,7 @@ public final class Logging {
      * @return See original {@link Logger} implementationA {@link LoggingFacade} with the plugin's logger
      */
     public static LoggingFacade simple() {
-        return new LoggingFacade(Logging.nab());
+        return FACADES.computeIfAbsent(Logging.nab(), LoggingFacade::new);
     }
 
     /**
@@ -79,7 +84,11 @@ public final class Logging {
      * @return See original {@link Logger} implementationThe relevant {@link Logger} for a calling plugin
      */
     private static Logger nab() {
-        return ReflectBukkit.getCallingPlugin(1).getLogger();
+        return NAB.get();
+    }
+
+    public static void setNab(Supplier<Logger> nab) {
+        NAB = nab;
     }
 
     /**

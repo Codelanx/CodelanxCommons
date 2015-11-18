@@ -19,13 +19,17 @@
  */
 package com.codelanx.integration;
 
+import com.codelanx.commons.logging.Logging;
 import com.codelanx.integration.econ.VaultProxyListener;
 import com.codelanx.integration.listener.ListenerManager;
 import com.codelanx.commons.logging.Debugger;
+import com.codelanx.integration.logging.PluginDebugOpts;
 import com.codelanx.integration.serialize.SerializationFactory;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.util.Scheduler;
 import java.io.IOException;
+
+import com.codelanx.integration.util.ReflectBukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.mcstats.Metrics;
 
@@ -53,7 +57,9 @@ public class CodelanxLib extends JavaPlugin {
      */
     @Override
     public void onEnable() {
-        Debugger.hookBukkit();
+        Logging.setNab(ReflectBukkit.getCallingPlugin(2)::getLogger);
+        Debugger.DebugUtil.setOps(PluginDebugOpts::getPluginOpts);
+        PluginDebugOpts.hookBukkit();
         if (Reflections.findPluginJarfile("Vault") != null) {
             new VaultProxyListener(this).register();
         }
