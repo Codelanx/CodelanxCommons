@@ -20,6 +20,8 @@
 package com.codelanx.commons.logging;
 
 import com.codelanx.commons.util.Reflections;
+import com.codelanx.integration.util.ReflectBukkit;
+
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 import java.util.logging.Filter;
@@ -77,7 +79,7 @@ public final class Logging {
      * @return See original {@link Logger} implementationThe relevant {@link Logger} for a calling plugin
      */
     private static Logger nab() {
-        return Reflections.getCallingPlugin(1).getLogger();
+        return ReflectBukkit.getCallingPlugin(1).getLogger();
     }
 
     /**
