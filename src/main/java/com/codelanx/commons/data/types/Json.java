@@ -221,7 +221,11 @@ public class Json implements FileDataType {
      */
     @Override
     public void save(File target) throws IOException {
-        new FileWriter(target).write(this.root.toJSONString());
+        String out = this.root.toJSONString();
+        try (FileWriter fw = new FileWriter(target)) {
+            fw.write(out);
+            fw.flush();
+        }
     }
 
 }
