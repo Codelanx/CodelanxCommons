@@ -20,9 +20,13 @@
 package com.codelanx.commons.util;
 
 import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 /**
  * A class of random number generators that can be used instead of instantiating
@@ -70,6 +74,30 @@ public final class RNG {
      */
     public static final ThreadLocalRandom THREAD_LOCAL() {
         return ThreadLocalRandom.current();
+    }
+
+    /**
+     * Returns a random element from a collection
+     *
+     * @since 0.2.0
+     * @version 0.2.0
+     *
+     * @param collection The {@link Collection} to get an element from
+     * @param <T> The type of the collection and returned element
+     * @return A random element
+     */
+    public static <T> T get(Collection<T> collection) {
+        if (collection.size() == 0) {
+            return null;
+        }
+        int rand = RNG.THREAD_LOCAL().nextInt(collection.size());
+        if (collection instanceof List) {
+            return ((List<T>) collection).get(rand);
+        } else {
+            Iterator<T> itr = collection.iterator();
+            IntStream.range(1, collection.size()).forEach(i -> itr.next());
+            return itr.next();
+        }
     }
 
 
