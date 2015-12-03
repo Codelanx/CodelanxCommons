@@ -122,8 +122,7 @@ public final class RNG {
         if (collection instanceof List) {
             List<T> lis = (List<T>) collection;
             for (int i = 0; i < amount; i++) {
-                int rand = r.nextInt(collection.size());
-                back.add(lis.get(rand));
+                back.add(lis.get(r.nextInt(collection.size())));
             }
         } else {
             int[] indexes = new int[amount];
