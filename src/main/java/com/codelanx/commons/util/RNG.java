@@ -19,11 +19,11 @@
  */
 package com.codelanx.commons.util;
 
+import com.codelanx.commons.util.exception.Exceptions;
+import org.apache.commons.lang3.Validate;
+
 import java.security.SecureRandom;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
@@ -98,6 +98,52 @@ public final class RNG {
             IntStream.range(1, collection.size()).forEach(i -> itr.next());
             return itr.next();
         }
+    }
+
+    /**
+     * Returns a list of random, unique elements from a collection
+     *
+     * @since 0.2.0
+     * @version 0.2.0
+     *
+     * @param collection The {@link Collection} to get elements from
+     * @param amount The amount of elements to retrieve
+     * @param <T> The type of the elements in the collection, and what's returned
+     * @return A {@link List} of unique, random elements
+     * @throws IllegalArgumentException If {@code amount > collection#size}
+     */
+    public static <T> List<T> get(Collection<T> collection, int amount) {
+        Validate.isTrue(amount <= collection.size(), "Amount cannot be greater than the collection size");
+        List<T> back = new ArrayList<>();
+        if (amount <= 0 || collection.size() == 0) {
+            return back;
+        }
+        Random r = RNG.THREAD_LOCAL();
+        if (collection instanceof List) {
+            List<T> lis = (List<T>) collection;
+            for (int i = 0; i < amount; i++) {
+                int rand = r.nextInt(collection.size());
+                back.add(lis.get(rand));
+            }
+        } else {
+            int[] indexes = new int[amount];
+            for (int i = 0; i < amount; i++) {
+                int next = r.nextInt(collection.size());
+                if (Arrays.stream(indexes).noneMatch(c -> c == next)) {
+                    indexes[i] = next;
+                }
+            }
+            Iterator<T> itr = collection.iterator();
+            Arrays.sort(indexes);
+            for (int i = 0, w = 0; i < amount && w < indexes.length; i++) {
+                T val = itr.next();
+                if (indexes[w] == i) {
+                    back.add(val);
+                    w++;
+                }
+            }
+        }
+        return back;
     }
 
 
