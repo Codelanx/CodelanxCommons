@@ -20,12 +20,12 @@
 package com.codelanx.commons.util.exception;
 
 /**
- * Represents an exception for when a plugin calls a method that it should
- * not have access to
+ * Represents an exception for when a method is called from a code
+ * location which is disallowed or invalid
  * 
  * @since 0.1.0
  * @author 1Rogue
- * @version 0.1.0
+ * @version 0.2.0
  */
 public class IllegalInvocationException extends RuntimeException {
 
