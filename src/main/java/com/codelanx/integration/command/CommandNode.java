@@ -139,7 +139,7 @@ public abstract class CommandNode<E extends Plugin> implements CommandExecutor, 
      */
     @Override
     public final boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Exceptions.illegalPluginAccess(ReflectBukkit.accessedFromBukkit(), "Only bukkit may call this method");
+        Exceptions.illegalInvocation(ReflectBukkit.accessedFromBukkit(), "Only bukkit may call this method");
         CommandNode<? extends Plugin> child = this;
         int start = 0;
         for (String s : args) {
@@ -220,7 +220,7 @@ public abstract class CommandNode<E extends Plugin> implements CommandExecutor, 
      */
     @Override
     public final List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        Exceptions.illegalPluginAccess(ReflectBukkit.accessedFromBukkit(), "Only bukkit may call this method");
+        Exceptions.illegalInvocation(ReflectBukkit.accessedFromBukkit(), "Only bukkit may call this method");
         CommandNode<? extends Plugin> child = this.getClosestChild(StringUtils.join(args, " "));
         List<String> back = new ArrayList<>();
         List<String> tabd = child.tabComplete(sender, args);

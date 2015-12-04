@@ -22,7 +22,7 @@ package com.codelanx.integration.listener;
 import com.codelanx.integration.CodelanxLib;
 import com.codelanx.commons.logging.Logging;
 import com.codelanx.commons.util.exception.Exceptions;
-import com.codelanx.commons.util.exception.IllegalPluginAccessException;
+import com.codelanx.commons.util.exception.IllegalInvocationException;
 import com.codelanx.commons.util.Reflections;
 import java.util.HashMap;
 import java.util.Map;
@@ -201,10 +201,10 @@ public final class ListenerManager {
      * @since 0.0.1
      * @version 0.1.0
      *
-     * @throws IllegalPluginAccessException Only {@link CodelanxLib} can use
+     * @throws IllegalInvocationException Only {@link CodelanxLib} can use
      */
     public static void release() {
-        Exceptions.illegalPluginAccess(Reflections.accessedFrom(CodelanxLib.class),
+        Exceptions.illegalInvocation(Reflections.accessedFrom(CodelanxLib.class),
                 "ListenerManager#release may only be called by CodelanxLib");
         ListenerManager.listeners.values().forEach((l) -> {
             l.onDisable();

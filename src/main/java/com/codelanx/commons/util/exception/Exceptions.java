@@ -102,7 +102,7 @@ public final class Exceptions {
     }
 
     /**
-     * Throws an {@link IllegalPluginAccessException} if the value of the
+     * Throws an {@link IllegalInvocationException} if the value of the
      * {@code state} parameter is {@code false}
      *
      * @since 0.1.0
@@ -110,27 +110,27 @@ public final class Exceptions {
      *
      * @param state The conditional to verify
      * @param message The message to include in an
-     * {@link IllegalPluginAccessException}
-     * @throws IllegalPluginAccessException if {@code state} is {@code false}
+     * {@link IllegalInvocationException}
+     * @throws IllegalInvocationException if {@code state} is {@code false}
      */
-    public static void illegalPluginAccess(boolean state, String message) {
+    public static void illegalInvocation(boolean state, String message) {
         if (!state) {
-            throw Exceptions.newException(IllegalPluginAccessException.class, message);
+            throw Exceptions.newException(IllegalInvocationException.class, message);
         }
     }
 
     /**
-     * Throws an {@link IllegalPluginAccessException} if the value of the
+     * Throws an {@link IllegalInvocationException} if the value of the
      * {@code state} parameter is {@code false}
      *
      * @since 0.1.0
      * @version 0.1.0
      *
      * @param state The conditional to verify
-     * @throws IllegalPluginAccessException if {@code state} is {@code false}
+     * @throws IllegalInvocationException if {@code state} is {@code false}
      */
-    public static void illegalPluginAccess(boolean state) {
-        Exceptions.illegalPluginAccess(state, null);
+    public static void illegalInvocation(boolean state) {
+        Exceptions.illegalInvocation(state, null);
     }
 
     /**

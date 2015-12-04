@@ -50,7 +50,7 @@ public class VaultProxyListener extends SubListener<CodelanxLib> {
      */
     public VaultProxyListener(CodelanxLib plugin) {
         super(plugin);
-        Exceptions.illegalPluginAccess(Reflections.accessedFrom(CodelanxLib.class));
+        Exceptions.illegalInvocation(Reflections.accessedFrom(CodelanxLib.class));
     }
 
     /**

@@ -27,7 +27,7 @@ package com.codelanx.commons.util.exception;
  * @author 1Rogue
  * @version 0.1.0
  */
-public class IllegalPluginAccessException extends RuntimeException {
+public class IllegalInvocationException extends RuntimeException {
 
     /**
      * {@inheritDoc}
@@ -37,7 +37,7 @@ public class IllegalPluginAccessException extends RuntimeException {
      * 
      * @param message {@inheritDoc}
      */
-    public IllegalPluginAccessException(String message) {
+    public IllegalInvocationException(String message) {
         super(message);
     }
 
@@ -47,7 +47,7 @@ public class IllegalPluginAccessException extends RuntimeException {
      * @since 0.1.0
      * @version 0.1.0
      */
-    public IllegalPluginAccessException() {
+    public IllegalInvocationException() {
         super();
     }
 
@@ -60,7 +60,7 @@ public class IllegalPluginAccessException extends RuntimeException {
      * @param message {@inheritDoc}
      * @param cause {@inheritDoc}
      */
-    public IllegalPluginAccessException(String message, Throwable cause) {
+    public IllegalInvocationException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -72,7 +72,7 @@ public class IllegalPluginAccessException extends RuntimeException {
      * 
      * @param cause {@inheritDoc}
      */
-    public IllegalPluginAccessException(Throwable cause) {
+    public IllegalInvocationException(Throwable cause) {
         super(cause);
     }
 

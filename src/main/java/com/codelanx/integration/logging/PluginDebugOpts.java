@@ -4,7 +4,7 @@ import com.codelanx.commons.logging.Debugger;
 import com.codelanx.commons.logging.Debugger.DebugOpts;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.util.exception.Exceptions;
-import com.codelanx.commons.util.exception.IllegalPluginAccessException;
+import com.codelanx.commons.util.exception.IllegalInvocationException;
 import com.codelanx.integration.CodelanxLib;
 import com.codelanx.integration.listener.ListenerManager;
 import com.codelanx.integration.util.ReflectBukkit;
@@ -120,13 +120,13 @@ public class PluginDebugOpts extends DebugOpts {
      * @since 0.1.0
      * @version 0.1.0
      *
-     * @throws IllegalPluginAccessException If something other than
+     * @throws IllegalInvocationException If something other than
      *                                      {@link CodelanxLib} calls this
      *                                      method
      */
     public static void hookBukkit() {
         //Check to make sure CodelanxLib is calling it
-        Exceptions.illegalPluginAccess(Reflections.accessedFrom(CodelanxLib.class),
+        Exceptions.illegalInvocation(Reflections.accessedFrom(CodelanxLib.class),
                 "Debugger#hookBukkit may only be called by CodelanxLib");
         Listener l = new BukkitPluginListener();
         if (!ListenerManager.isRegisteredToBukkit(CodelanxLib.get(), l)) {
