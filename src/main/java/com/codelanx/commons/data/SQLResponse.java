@@ -20,6 +20,7 @@
 package com.codelanx.commons.data;
 
 import java.sql.SQLException;
+import java.util.function.Consumer;
 
 /**
  * Class description for {@link SQLResponse}
@@ -54,6 +55,13 @@ public class SQLResponse<T> {
 
     public SQLException getException() {
         return this.ex;
+    }
+
+    public SQLResponse<T> onException(Consumer<SQLException> consumer) {
+        if (this.ex != null) {
+            consumer.accept(this.ex);
+        }
+        return this;
     }
     
     public T getResponse() {
