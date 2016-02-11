@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
@@ -343,4 +344,53 @@ public final class Reflections {
         }
         Logging.info(sb.toString());
     }
+
+    public static Optional<Integer> parseInt(String s) {
+        try {
+            return Optional.of(Integer.parseInt(s));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Double> parseDouble(String s) {
+        try {
+            return Optional.of(Double.parseDouble(s));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Float> parseFloat(String s) {
+        try {
+            return Optional.of(Float.parseFloat(s));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Short> parseShort(String s) {
+        try {
+            return Optional.of(Short.parseShort(s));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Long> parseLong(String s) {
+        try {
+            return Optional.of(Long.parseLong(s));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Byte> parseByte(String s) {
+        try {
+            return Optional.of(Byte.parseByte(s));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
+        }
+    }
+
 }
