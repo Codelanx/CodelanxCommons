@@ -20,11 +20,19 @@
 package com.codelanx.commons.data.types;
 
 import com.codelanx.commons.data.FileDataType;
+import com.codelanx.commons.data.FileSerializable;
 import com.codelanx.commons.logging.Debugger;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Map;
+
+import jdk.nashorn.internal.runtime.JSONFunctions;
+import org.apache.commons.lang.Validate;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -36,12 +44,9 @@ import org.json.simple.parser.ParseException;
  * @author 1Rogue
  * @version 0.1.0
  */
-public class Json implements FileDataType {
+public class Json extends FileDataType {
 
-    /** The {@link File} location of this {@link FileDataType} */
-    protected final File location;
-    /** The root {@link JSONObject} */
-    protected final JSONObject root;
+    private final JSONParser parser = new JSONParser();
 
     /**
      * Reads and loads a JSON file into memory
@@ -53,148 +58,11 @@ public class Json implements FileDataType {
      * @throws ParseException If the file is not in standard JSON format
      */
     public Json(File location) throws ParseException {
-        this.location = location;
-        JSONParser parser = new JSONParser();
-        JSONObject root = null;
-        try {
-            root = (JSONObject) parser.parse(new FileReader(this.location));
-        } catch (IOException ex) {
-            Debugger.error(ex, "Error loading JSON file");
-        }
-        this.root = root;
+        super(location);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @param value {@inheritDoc}
-     */
-    @Override
-    public void set(String path, Object value) {
-        String[] ladder = this.getLadder(path);
-        this.traverse(true, ladder).put(ladder[ladder.length - 1], value);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @return {@inheritDoc}
-     */
-    @Override
-    public boolean isSet(String path) {
-        String[] ladder = this.getLadder(path);
-        return this.getContainer(ladder).containsKey(ladder[ladder.length - 1]);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @return {@inheritDoc}
-     */
-    @Override
-    public Object get(String path) {
-        String[] ladder = this.getLadder(path);
-        return this.getContainer(ladder).get(ladder[ladder.length - 1]);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @param def {@inheritDoc}
-     * @return {@inheritDoc}
-     */
-    @Override
-    public Object get(String path, Object def) {
-        String[] ladder = this.getLadder(path);
-        JSONObject container = this.traverse(false, ladder);
-        return container.get(ladder[ladder.length - 1]);
-    }
-
-    /**
-     * Gets the {@link JSONObject} above the requested object specified by the
-     * supplied {@code ladder} parameter.
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param ladder A string array, already split in order of levels to
-     * traverse
-     * @return The {@link JSONObject} above the requested object
-     */
-    protected JSONObject getContainer(String... ladder) {
-        return this.traverse(false, ladder);
-    }
-
-    /**
-     * Gets the {@link JSONObject} above the requested object specified by the
-     * supplied {@code path} parameter.
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path The period-delimited path to the object desired
-     * @return The {@link JSONObject} above the requested object
-     */
-    protected JSONObject getContainer(String path) {
-        return this.getContainer(this.getLadder(path));
-    }
-
-    /**
-     * Converts a period-delimited string into a String array
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path The path to split
-     * @return The split path
-     */
-    protected String[] getLadder(String path) {
-        return path.split("\\.");
-    }
-
-    /**
-     * Traverses a {@link JSONObject} tree from the internal root node. Will
-     * return a {@link JSONObject} container of the relevant element at the end
-     * of the search, or just an empty {@link JSONObject} if nothing exists.
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param makePath Whether to fill empty space with {@link JSONObject}s
-     * @param ladder A String array depicting the location to search in
-     * @return A {@link JSONObject} containing the last node in the ladder
-     */
-    protected JSONObject traverse(boolean makePath, String... ladder) {
-        JSONObject container = this.root;
-        for (int i = 0; i < ladder.length - 1; i++) {
-            if (!container.containsKey(ladder[i]) && makePath) {
-                container.put(ladder[i], new JSONObject());
-            }
-            JSONObject temp = (JSONObject) container.get(ladder[i]);
-            if (temp == null) {
-                //purposefully set as null
-                break;
-            } else {
-                container = temp;
-            }
-        }
-        return container;
+    public Json() {
+        super(null);
     }
 
     /**
@@ -210,22 +78,110 @@ public class Json implements FileDataType {
         this.save(this.location);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param target {@inheritDoc}
-     * @throws IOException {@inheritDoc}
-     */
     @Override
-    public void save(File target) throws IOException {
-        String out = this.root.toJSONString();
-        try (FileWriter fw = new FileWriter(target)) {
-            fw.write(out);
-            fw.flush();
+    protected JSONObject readRaw(File target) throws IOException {
+        try {
+            return (JSONObject) parser.parse(new FileReader(target));
+        } catch (ParseException e) {
+            throw new IOException(e);
         }
     }
 
+    @Override
+    public JSONObject serializeMap(Map<String, Object> toFileFormat) {
+        JSONObject obj = this.newSection();
+        toFileFormat.forEach((k, v) -> {
+            obj.put(k, this.parseSerializable(v));
+        });
+        return obj;
+    }
+
+    @Override
+    public Object serializeArray(Object array) {
+        Class<?> type = array.getClass().getComponentType();
+        JSONArray back = new JSONArray();
+        if (type.isPrimitive()) {
+            //we have to do some fuckeronies
+            int length = Array.getLength(array);
+            for (int i = 0; i < length; i++) {
+                back.add(Array.get(array, i));
+            }
+        } else {
+            Object[] objs = (Object[]) array;
+            Arrays.stream(objs).map(this::parseSerializable).forEach(back::add);
+        }
+        return back;
+    }
+
+    @Override
+    public Object deserializeArray(Object array) {
+        if (array instanceof JSONArray) {
+            JSONArray arr = (JSONArray) array;
+            arr.replaceAll(this::parseDeserializable);
+        }
+        return array;
+    }
+
+    @Override
+    protected JSONObject newSection() {
+        return new JSONObject();
+    }
+
+    @Override
+    public String toString() {
+        return Json.format(this.getRoot().toJSONString());
+    }
+
+    @Override
+    protected JSONObject getRoot() {
+        return (JSONObject) super.getRoot();
+    }
+
+    public static String format(String json) {
+        int level = 0;
+        StringBuilder sb = new StringBuilder();
+        char[] itr = json.toCharArray();
+        for (int i = 0; i < itr.length; i++) {
+            switch(itr[i]) {
+                case '}':
+                case ']':
+                    level--;
+                    sb.append(FileDataType.NEWLINE);
+                    for (int w = 0; w < level; w++) {
+                        sb.append("    "); //4 spaces
+                    }
+                    break;
+            }
+            sb.append(itr[i]);
+            switch(itr[i]) {
+                case ':':
+                    sb.append(' ');
+                    break;
+                case ',':
+                    sb.append(FileDataType.NEWLINE);
+                    for (int w = 0; w < level; w++) {
+                        sb.append("    "); //4 spaces
+                    }
+                    break;
+                case '{':
+                case '[':
+                    level++;
+                    sb.append(FileDataType.NEWLINE);
+                    for (int w = 0; w < level; w++) {
+                        sb.append("    "); //4 spaces
+                    }
+                    break;
+            }
+        }
+        return sb.toString();
+    }
+
+    @Override
+    protected String toString(Map<String, Object> section) {
+        if (section instanceof JSONObject) {
+            return Json.format(((JSONObject) section).toJSONString());
+        } else {
+            return Json.format(section.toString()); //hope it doesn't break shit
+        }
+    }
 }
