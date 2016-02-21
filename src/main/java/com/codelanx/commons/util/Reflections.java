@@ -37,10 +37,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -64,12 +64,12 @@ public final class Reflections {
     /**
      * Returns {@code true} if the specified target has the passed
      * {@link Annotation}
-     * 
+     *
      * @since 0.1.0
      * @version 0.1.0
      * 
      * @param target The relevant element to check for an {@link Annotation}
-     * @param check The {@link Annotation} class type to check for
+     * @param check  The {@link Annotation} class type to check for
      * @return {@code true} if the {@link Annotation} is present
      */
     public static boolean hasAnnotation(AnnotatedElement target, Class<? extends Annotation> check) {
@@ -150,7 +150,7 @@ public final class Reflections {
      * respective jarfiles in the directory.
      * 
      * @since 0.1.0
-     * @version 0.1.0
+     * @version 0.2.0
      * 
      * @param name The name of the plugin as specified in the {@code plugin.yml}
      * @return The {@link File} for the plugin jarfile, or {@code null} if not
@@ -164,7 +164,7 @@ public final class Reflections {
         })) {
             try (InputStream is = new FileInputStream(f); ZipInputStream zi = new ZipInputStream(is)) {
                 ZipEntry ent = null;
-                while((ent = zi.getNextEntry()) != null) {
+                while ((ent = zi.getNextEntry()) != null) {
                     if (ent.getName().equalsIgnoreCase("plugin.yml")) {
                         break;
                     }
@@ -190,6 +190,14 @@ public final class Reflections {
             }
         }
         return null;
+    }
+
+    public static <K, V> Map<K, V> difference(Map<K, V> initial, Map<K, V> replacer) {
+        Map<K, V> back = new HashMap<>();
+        back.putAll(initial);
+        back.putAll(replacer);
+        back.entrySet().removeAll(initial.entrySet());
+        return back;
     }
 
     /**
@@ -319,10 +327,28 @@ public final class Reflections {
     }
 
     /**
-     * Prints out the stack history 10 calls back
-     * 
-     * @since 0.2.0
+     * Performs an operation with a lock, saving room by not requiring a lot of
+     * {@code try-finally} blocks
+     *
+     * @param lock      The {@link Lock} to utilize
+     * @param operation The code to be run
      * @version 0.2.0
+     * @since 0.2.0
+     */
+    public static <R> R operateLock(Lock lock, Supplier<R> operation) {
+        lock.lock();
+        try {
+            return operation.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Prints out the stack history 10 calls back
+     *
+     * @version 0.2.0
+     * @since 0.2.0
      */
     public static void trace() {
         trace(10);
@@ -330,7 +356,7 @@ public final class Reflections {
 
     /**
      * Prints out the stack history {@code length} calls back
-     * 
+     *
      * @since 0.2.0
      * @version 0.2.0
      * 
@@ -343,6 +369,55 @@ public final class Reflections {
             sb.append(String.format("\n\tCalled from:\t%s#%s:%d\t\tFile: %s", elems[i].getClassName(), elems[i].getMethodName(), elems[i].getLineNumber(), elems[i].getFileName()));
         }
         Logging.info(sb.toString());
+    }
+
+    public static UUID parseUUID(String uuid) {
+        Validate.isTrue(uuid.length() == 32 || uuid.length() == 36, "Invalid UUID format supplied");
+        if (uuid.length() == 36) {
+            return UUID.fromString(uuid);
+        } else {
+            return UUID.fromString(uuid.substring(0, 8)
+                    + "-" + uuid.substring(8, 12)
+                    + "-" + uuid.substring(12, 16)
+                    + "-" + uuid.substring(16, 20)
+                    + "-" + uuid.substring(20, 32));
+        }
+    }
+
+    public static String objectString(Object in) {
+        if (in == null) {
+            return "null";
+        }
+        return in.getClass().getName() + "@" + Integer.toHexString(in.hashCode());
+    }
+
+    public static Class<?> getArrayClass(Class<?> componentType) throws ClassNotFoundException {
+        ClassLoader classLoader = componentType.getClassLoader();
+        String name;
+        if (componentType.isArray()) {
+            // just add a leading "["
+            name = "[" + componentType.getName();
+        } else if (componentType == boolean.class) {
+            name = "[Z";
+        } else if (componentType == byte.class) {
+            name = "[B";
+        } else if (componentType == char.class) {
+            name = "[C";
+        } else if (componentType == double.class) {
+            name = "[D";
+        } else if (componentType == float.class) {
+            name = "[F";
+        } else if (componentType == int.class) {
+            name = "[I";
+        } else if (componentType == long.class) {
+            name = "[J";
+        } else if (componentType == short.class) {
+            name = "[S";
+        } else {
+            // must be an object non-array class
+            name = "[L" + componentType.getName() + ";";
+        }
+        return classLoader != null ? classLoader.loadClass(name) : Class.forName(name);
     }
 
     public static Optional<Integer> parseInt(String s) {

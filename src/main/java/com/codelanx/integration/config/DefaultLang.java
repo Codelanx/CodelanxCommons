@@ -20,7 +20,6 @@
 package com.codelanx.integration.config;
 
 import com.codelanx.commons.config.DataHolder;
-import com.codelanx.commons.config.LangFile;
 import com.codelanx.commons.config.RelativePath;
 import com.codelanx.commons.data.types.Yaml;
 import com.codelanx.integration.internal.InternalLang;

@@ -19,11 +19,11 @@
  */
 package com.codelanx.integration.internal;
 
+import com.codelanx.commons.data.types.Yaml;
 import com.codelanx.integration.CodelanxLib;
 import com.codelanx.integration.config.PluginClass;
 import com.codelanx.commons.config.RelativePath;
 import com.codelanx.commons.config.LangFile;
-import com.codelanx.commons.data.types.Yaml;
 import com.codelanx.integration.util.Paginator;
 import com.codelanx.integration.command.HelpCommand;
 import com.codelanx.integration.command.ReloadCommand; //Used in javadocs

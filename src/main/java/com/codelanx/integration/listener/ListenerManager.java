@@ -26,11 +26,19 @@ import com.codelanx.commons.util.exception.IllegalInvocationException;
 import com.codelanx.commons.util.Reflections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
+
+import com.codelanx.integration.util.ReflectBukkit;
 import org.apache.commons.lang.Validate;
+import org.bukkit.Bukkit;
+import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Centrally holds references to different Listener classes to allow for
@@ -211,6 +219,27 @@ public final class ListenerManager {
             HandlerList.unregisterAll(l);
         });
         ListenerManager.listeners.clear();
+    }
+
+    /**
+     * Allows registering an anonymous listener for any bukkit listeners using
+     * Java 8's function API, useful for listening to events in one-liner solutions
+     *
+     * @since 0.2.0
+     * @version 0.2.0
+     *
+     * @param clazz The {@link Event} fired within Bukkit to listen to
+     * @param event A {@link Consumer} of the event, called when the event is fired
+     * @param <T> The type of the {@link Event}
+     */
+    public static <T extends Event> void listen(Class<T> clazz, Consumer<T> event) {
+        ListenerManager.registerListener(new SubListener<JavaPlugin>(ReflectBukkit.getCallingPlugin()) {
+
+            @EventHandler
+            public void handle(T bukkitEvent) {
+                event.accept(bukkitEvent);
+            }
+        });
     }
 
 }

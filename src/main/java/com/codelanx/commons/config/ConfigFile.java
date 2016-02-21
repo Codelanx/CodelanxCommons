@@ -178,29 +178,7 @@ public interface ConfigFile extends InfoFile {
     public static <T extends FileDataType> ConfigFile retrieve(T file, ConfigFile config) {
         Validate.notNull(file, "File cannot be null");
         Validate.notNull(config, "Config cannot be null");
-        return new ConfigFile() {
-
-            @Override
-            public String getPath() {
-                return config.getPath();
-            }
-
-            @Override
-            public Object getDefault() {
-                return config.getDefault();
-            }
-
-            @Override
-            public T getConfig() {
-                return file;
-            }
-
-            @Override
-            public DataHolder<FileDataType> getData() {
-                throw new UnsupportedOperationException("Anonymous ConfigFile classes do not have DataHolders");
-            }
-            
-        };
+        return ConfigFile.anonMutator(config.getPath(), config.getDefault(), file);
     }
 
     /**
@@ -217,4 +195,29 @@ public interface ConfigFile extends InfoFile {
         return ConfigFile.retrieve(t, this);
     }
 
+    public static <T extends FileDataType> ConfigFile anonMutator(String path, Object def, T file) {
+        return new ConfigFile() {
+
+            @Override
+            public String getPath() {
+                return path;
+            }
+
+            @Override
+            public Object getDefault() {
+                return def;
+            }
+
+            @Override
+            public T getConfig() {
+                return file;
+            }
+
+            @Override
+            public DataHolder<FileDataType> getData() {
+                throw new UnsupportedOperationException("Anonymous ConfigFile classes do not have DataHolders");
+            }
+
+        };
+    }
 }
