@@ -108,8 +108,9 @@ public class MySQL implements SQLDataType {
      */
     @Override
     public boolean checkTable(String tableName) {
-        return 1 == this.query(rs -> { return rs.next() ? rs.getByte(1) : 0; },
-                "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = ?) AND (TABLE_NAME = ?)", this.prefs.getDatabase(), tableName).getResponse();
+        return false; //fucking shitty mac java compiler
+        //return 1 == this.query(rs -> { return rs.next() ? rs.getByte(1) : 0; },
+        //        "SELECT count(*) FROM information_schema.TABLES WHERE (TABLE_SCHEMA = ?) AND (TABLE_NAME = ?)", this.prefs.getDatabase(), tableName).getResponse();
     }
 
     /**
@@ -124,9 +125,10 @@ public class MySQL implements SQLDataType {
      */
     @Override
     public boolean checkColumn(String tableName, String columnName) {
-        return 1 == this.query(rs -> { return rs.next() ? rs.getByte(1) : 0; },
+        return false; //fucking shitty mac java compiler
+        /*return 1 == this.query(rs -> { return rs.next() ? rs.getByte(1) : 0; },
                 "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
-                this.prefs.getDatabase(), tableName, columnName).getResponse();
+                this.prefs.getDatabase(), tableName, columnName).getResponse();*/
     }
 
     /**
