@@ -1,152 +1,103 @@
-/*
- * Copyright (C) 2015 Codelanx, All Rights Reserved
- *
- * This work is licensed under a Creative Commons
- * Attribution-NonCommercial-NoDerivs 3.0 Unported License.
- *
- * This program is protected software: You are free to distrubute your
- * own use of this software under the terms of the Creative Commons BY-NC-ND
- * license as published by Creative Commons in the year 2015 or as published
- * by a later date. You may not provide the source files or provide a means
- * of running the software outside of those licensed to use it.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- * You should have received a copy of the Creative Commons BY-NC-ND license
- * long with this program. If not, see <https://creativecommons.org/licenses/>.
- */
 package com.codelanx.commons.data.types;
 
 import com.codelanx.commons.data.FileDataType;
+import com.codelanx.commons.util.Reflections;
+import org.json.simple.JSONObject;
+import org.yaml.snakeyaml.DumperOptions;
+
 import java.io.File;
 import java.io.IOException;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Represents a YAML file that is parsed and loaded into memory.
- *
- * @since 0.1.0
- * @author 1Rogue
- * @version 0.1.0
+ * Created by Rogue on 1/16/16.
  */
-public class Yaml implements FileDataType {
+public class Yaml extends FileDataType {
 
-    /** The location of this {@link FileDataType} */
-    protected final File location;
-    /** The underlying {@link FileConfiguration} object */
-    protected final FileConfiguration yaml;
+    private static final DumperOptions OUTPUT = new DumperOptions() {{
+        this.setDefaultFlowStyle(FlowStyle.BLOCK);
+    }};
+    private static final ThreadLocal<org.yaml.snakeyaml.Yaml> CRYPTEX = new ThreadLocal<org.yaml.snakeyaml.Yaml>() {
+        @Override
+        protected org.yaml.snakeyaml.Yaml initialValue() {
+            return new org.yaml.snakeyaml.Yaml(OUTPUT);
+        }
+    };
 
-    /**
-     * Reads and loads a YAML file into memory.
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param location The location of the file to read
-     */
-    public Yaml(File location) {
-        this.location = location;
-        this.yaml = YamlConfiguration.loadConfiguration(this.location);
+    public Yaml(File source) {
+        super(source);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @return {@inheritDoc}
-     */
+    public Yaml() {
+        super(null);
+    }
+
     @Override
-    public boolean isSet(String path) {
-        return this.yaml.isSet(path);
+    protected Map<String, Object> readRaw(File target) throws IOException {
+        return (Map<String, Object>) CRYPTEX.get().load(Files.newBufferedReader(target.toPath()));
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @param value {@inheritDoc}
-     */
     @Override
-    public void set(String path, Object value) {
-        this.yaml.set(path, value);
+    public Object serializeMap(Map<String, Object> toFileFormat) {
+        JSONObject obj = new JSONObject();
+        toFileFormat.forEach((k, v) -> {
+            obj.put(k, this.parseSerializable(v));
+        });
+        return obj;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @return {@inheritDoc}
-     */
     @Override
-    public Object get(String path) {
-        return this.yaml.get(path);
+    public Object serializeArray(Object array) {
+        if (array.getClass().getComponentType().isPrimitive()) {
+            return array;
+        } else {
+            Object[] objs = (Object[]) array;
+            return Arrays.stream(objs).map(this::parseSerializable).toArray();
+        }
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param path {@inheritDoc}
-     * @param def {@inheritDoc}
-     * @return {@inheritDoc}
-     */
     @Override
-    public Object get(String path, Object def) {
-        return this.yaml.get(path, def);
+    public Object deserializeArray(Object array) {
+        if (array.getClass().getComponentType().isPrimitive()) {
+            return array;
+        } else {
+            Object[] back = (Object[]) array;
+            return Arrays.stream(back).map(this::parseDeserializable).toArray();
+        }
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @throws IOException {@inheritDoc}
-     */
     @Override
-    public void save() throws IOException {
-        this.save(this.location);
+    protected Map<String, Object> newSection() {
+        return new HashMap<>();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param target {@inheritDoc}
-     * @throws IOException {@inheritDoc}
-     */
     @Override
-    public void save(File target) throws IOException {
-        this.yaml.save(target);
+    protected String toString(Map<String, Object> section) {
+        return CRYPTEX.get().dump(this.replaceUnserializables(section));
     }
 
-    /**
-     * Returns the underlying {@link FileConfiguration} used in reading the YAML
-     * file
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @return The underlying {@link FileConfiguration} in use
-     */
-    public FileConfiguration getFileConfiguration() {
-        return this.yaml;
+    @Override
+    public String toString() {
+        return this.toString(this.getRoot());
     }
 
+    private Map<String, Object> replaceUnserializables(Map<String, Object> in) {
+        Map<String, Object> back = new HashMap<>();
+        back.putAll(in);
+        back.replaceAll((k, v) -> {
+            if (v instanceof Map
+                    || v.getClass().isArray()
+                    || v instanceof List
+                    || v == null) {
+                return v;
+            } else {
+                return Reflections.objectString(v);
+            }
+        });
+        return back;
+    }
 }
