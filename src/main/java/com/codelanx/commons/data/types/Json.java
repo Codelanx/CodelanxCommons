@@ -20,18 +20,13 @@
 package com.codelanx.commons.data.types;
 
 import com.codelanx.commons.data.FileDataType;
-import com.codelanx.commons.data.FileSerializable;
-import com.codelanx.commons.logging.Debugger;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Map;
 
-import jdk.nashorn.internal.runtime.JSONFunctions;
-import org.apache.commons.lang.Validate;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
