@@ -19,7 +19,6 @@
  */
 package com.codelanx.commons.util;
 
-import com.codelanx.integration.CodelanxLib;
 import com.codelanx.commons.logging.Debugger;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.bukkit.Bukkit;
 
 /**
  * Façade utility class for simplifying scheduling tasks
@@ -89,47 +87,6 @@ public final class Scheduler {
      */
     public static ScheduledFuture<?> runAsyncTask(Runnable r) {
         return Scheduler.runAsyncTask(r, 0);
-    }
-
-    /**
-     * Runs a task after a specified delay on Bukkit's main thread
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param r The {@link Runnable} to execute
-     * @param delay Time (in seconds) to wait before execution
-     * @return The scheduled task that will execute the provided runnable
-     */
-    public static ScheduledFuture<?> runSyncTask(Runnable r, long delay) {
-        //TODO: hook bukkit's scheduler directly for this operation
-        return Scheduler.runAsyncTask(() -> {
-            Bukkit.getServer().getScheduler().callSyncMethod(CodelanxLib.get(), () -> {
-                r.run();
-                return null;
-            });
-        }, delay);
-    }
-
-    /**
-     * Runs a task after a specified time on Bukkit's main thread, and repeats
-     * it in intervals as specified by the {@code delay} parameter
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param r The {@link Runnable} to execute
-     * @param startAfter Time (in seconds) to wait before executing at all
-     * @param delay Time (in seconds) to wait in between executions
-     * @return The scheduled task that will execute the provided runnable
-     */
-    public static ScheduledFuture<?> runSyncTaskRepeat(Runnable r, long startAfter, long delay) {
-        return Scheduler.runAsyncTaskRepeat(() -> {
-            Bukkit.getServer().getScheduler().callSyncMethod(CodelanxLib.get(), () -> {
-                r.run();
-                return null;
-            });
-        }, startAfter, delay);
     }
     
     /**

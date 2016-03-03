@@ -34,14 +34,13 @@ import org.json.simple.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 
 /**
  * Opens and loads a file into memory using the appropriate data type. This
@@ -206,25 +204,42 @@ public abstract class FileDataType implements DataType {
     public void save(File target) throws IOException {
         Validate.notNull(target, "Cannot save to a null file");
         Map<String, Object> out = this.serializationCopy();
-        SAVER.submit(() -> {
+        Runnable r = () -> {
             boolean lock = target.equals(this.location);
             if (lock) {
                 this.fileLock.writeLock().lock();
             }
             try {
-                this.write(target, out);
+                System.out.println("Writing to file...");
+                this.writeRaw(target); //TODO: Use #write
             } finally {
                 if (lock) {
                     this.fileLock.writeLock().unlock();
                 }
             }
-        });
+        };
+        if (SAVER.isShutdown() || SAVER.isTerminated()) {
+            r.run();
+        } else {
+            SAVER.submit(r);
+        }
+    }
+
+    private void writeRaw(File target) {
+        try (FileWriter fw = new FileWriter(target)) {
+            fw.write(this.toString(this.serializationCopy()));
+            fw.flush();
+        } catch (IOException e) {
+            System.err.println("Error saving file to target");
+            e.printStackTrace();
+        }
     }
 
     //TODO: Automatically determine spacing, how to read a key in a section (to determine position)
     private void write(File target, Map<String, Object> out) {
         //TODO: Make this work
         if (true) {
+            this.writeRaw(target);
             throw new UnsupportedOperationException("Incremental File saving not complete yet");
         }
         try {

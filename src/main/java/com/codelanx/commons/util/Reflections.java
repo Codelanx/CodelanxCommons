@@ -362,7 +362,7 @@ public final class Reflections {
      *
      * @since 0.2.0
      * @version 0.2.0
-     * 
+     *
      * @param length The number of calls back on the stack to print out
      */
     public static void trace(int length) {
