@@ -98,7 +98,9 @@ public interface InfoFile {
         Class<? extends InfoFile> clazz = this.getClass();
         Exceptions.illegalState(Reflections.hasAnnotation(clazz, RelativePath.class),
                 "'" + clazz.getName() + "' is missing the RelativePath annotation");
-        return new File(clazz.getAnnotation(RelativePath.class).value());
+        String val = clazz.getAnnotation(RelativePath.class).value();
+        val = val.replace('/', File.separatorChar);
+        return new File(val);
     }
 
     /**
