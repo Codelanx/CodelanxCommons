@@ -471,4 +471,28 @@ public final class Reflections {
         }
     }
 
+    public static String properEnumName(Enum<?> val) {
+        String s = val.name().toLowerCase();
+        char[] ch = s.toCharArray();
+        boolean skip = false;
+        for (int i = 0; i < ch.length; i++) {
+            if (skip) {
+                skip = false;
+                continue;
+            }
+            if (i == 0) {
+                ch[i] = Character.toUpperCase(ch[i]);
+                continue;
+            }
+            if (ch[i] == '_') {
+                ch[i] = ' ';
+                if (i < ch.length - 1) {
+                    ch[i + 1] = Character.toUpperCase(ch[i + 1]);
+                }
+                skip = true;
+            }
+        }
+        return new String(ch).intern();
+    }
+
 }
