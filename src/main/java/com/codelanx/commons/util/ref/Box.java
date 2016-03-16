@@ -19,6 +19,8 @@
  */
 package com.codelanx.commons.util.ref;
 
+import java.util.Objects;
+
 /**
  * Used for enclosing a single return value, such as a returned task from a
  * scheduler. Should not be exposed beyond being a local member, as the only
@@ -40,4 +42,8 @@ public class Box<T> {
      */
     public volatile T value;
 
+    @Override
+    public String toString() {
+        return Objects.toString(this.value);
+    }
 }

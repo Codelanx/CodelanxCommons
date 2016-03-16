@@ -72,4 +72,8 @@ public class Tuple<E, T> {
         return this.two;
     }
 
+    @Override
+    public String toString() {
+        return "[" + this.one + ", " + this.two + "]";
+    }
 }
