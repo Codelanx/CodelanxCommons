@@ -49,6 +49,29 @@ public final class Logging {
     private Logging() {}
 
     /**
+     * Sets the system/global logging format to:
+     * {@code [hour:minute:second] LOGLEVEL: output\n}
+     *
+     * @since 0.3.0
+     * @version 0.3.0
+     */
+    public static void setNicerFormat() {
+        Logging.setGlobalFormat("[%1$tl:%1$tM:%1$tS] %4$s: %5$s%n");
+    }
+
+    /**
+     * Sets the system/global logging format to {@code format}
+     *
+     * @since 0.3.0
+     * @version 0.3.0
+     *
+     * @param format The format to use for any {@link java.util.logging.SimpleFormatter} loggers
+     */
+    public static void setGlobalFormat(String format) {
+        System.setProperty("java.util.logging.SimpleFormatter.format", format);
+    }
+
+    /**
      * Returns the current {@link Logger} in use by the plugin calling this
      * method
      * 
