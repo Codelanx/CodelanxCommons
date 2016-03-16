@@ -117,7 +117,7 @@ public class Debugger {
         if (opts == null || !opts.doOutput()) {
             return;
         }
-        Debugger.logger.log(level, String.format("[%s]=> %s",
+        opts.getLogger().log(level, String.format("[%s]=> %s",
                 opts.getPrefix(), String.format(format, args)));
     }
 
@@ -137,7 +137,7 @@ public class Debugger {
         if (opts == null || !opts.doOutput()) {
             return;
         }
-        Debugger.logger.log(Level.INFO, String.format("[%s]=> %s",
+        opts.getLogger().log(Level.INFO, String.format("[%s]=> %s",
                 opts.getPrefix(), String.format(format, args)));
     }
 
@@ -161,7 +161,7 @@ public class Debugger {
             return;
         }
         if (!opts.doHideErrors()) {
-            Debugger.logger.log(Level.SEVERE, String.format(message, args), error);
+            opts.getLogger().log(Level.SEVERE, String.format(message, args), error);
         }
         //Send JSON payload
         Debugger.DebugUtil.report(opts, error, String.format(message, args));
@@ -238,6 +238,7 @@ public class Debugger {
         protected String prefix;
         protected boolean output;
         protected boolean hideErrors;
+        protected Logger logger = Debugger.logger;
         protected String url;
 
         /**
@@ -342,6 +343,14 @@ public class Debugger {
 
         public JSONObject attachInfo() {
             return new JSONObject();
+        }
+
+        public Logger getLogger() {
+            return this.logger;
+        }
+
+        public void setLogger(Logger logger) {
+            this.logger = logger;
         }
 
     }
