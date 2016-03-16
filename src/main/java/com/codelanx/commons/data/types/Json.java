@@ -27,6 +27,7 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -41,7 +42,7 @@ import org.json.simple.parser.ParseException;
  */
 public class Json extends FileDataType {
 
-    private final JSONParser parser = new JSONParser();
+    private static final ThreadLocal<JSONParser> JSON_PARSER = ThreadLocal.withInitial(JSONParser::new);
 
     /**
      * Reads and loads a JSON file into memory
@@ -75,8 +76,11 @@ public class Json extends FileDataType {
 
     @Override
     protected JSONObject readRaw(File target) throws IOException {
+        if (FileUtils.readFileToString(target).trim().isEmpty()) {
+            return this.newSection();
+        }
         try {
-            return (JSONObject) parser.parse(new FileReader(target));
+            return (JSONObject) JSON_PARSER.get().parse(new FileReader(target));
         } catch (ParseException e) {
             throw new IOException(e);
         }
