@@ -40,6 +40,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -298,7 +299,7 @@ public abstract class FileDataType implements DataType {
         return null;
     }
 
-    protected final Object parseSerializable(Object o) {
+    public final Object parseSerializable(Object o) {
         if (o == null) {
             return null;
         }
@@ -308,6 +309,10 @@ public abstract class FileDataType implements DataType {
             return this.serializeMap(((FileSerializable) o).getData());
         } else if (o.getClass().isArray()) {
             return this.serializeArray(o);
+        } else if (o instanceof Collection) {
+            return this.serializeArray(((Collection) o).toArray());
+        } else if (o instanceof Enum<?>) {
+            return ((Enum<?>) o).name();
         } else {
             return o;
         }
