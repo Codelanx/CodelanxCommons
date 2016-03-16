@@ -75,6 +75,8 @@
                                 <includes>
                                     <include>org.mcstats.bukkit:metrics</include>
                                     <include>org.yaml:snakeyaml</include>
+                                    <include>com.googlecode.json-simple:json-simple</include>
+                                    <include>commons-io:commons-io</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
@@ -129,6 +131,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
