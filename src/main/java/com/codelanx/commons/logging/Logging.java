@@ -56,7 +56,8 @@ public final class Logging {
      * @version 0.3.0
      */
     public static void setNicerFormat() {
-        Logging.setGlobalFormat("[%1$tl:%1$tM:%1$tS] %4$s: %5$s%n");
+        //See: https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html
+        Logging.setGlobalFormat("[%1$tH:%1$tM:%1$tS] %4$s: %5$s%n");
     }
 
     /**
