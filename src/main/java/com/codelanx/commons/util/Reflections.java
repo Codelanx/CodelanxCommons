@@ -33,8 +33,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -493,6 +497,38 @@ public final class Reflections {
             }
         }
         return new String(ch).intern();
+    }
+
+    /**
+     * Façade method for streaming {@link Iterable<T>}, so that Iterable can be accepted as a general parameter
+     *
+     * @since 0.1.0
+     * @version 0.1.0
+     *
+     * @param itr The {@link Iterable<T>} to turn into a stream
+     * @param <T> The type of the stream
+     * @return A {@link Stream<T>} of the iterable elements
+     */
+    public static <T> Stream<T> stream(Iterable<T> itr) {
+        if (itr instanceof Collection) {
+            return ((Collection<T>) itr).stream();
+        } else {
+            return StreamSupport.stream(itr.spliterator(), false);
+        }
+    }
+
+    /**
+     * Façade method for arrays, to simplify accepting general parameters even further
+     *
+     * @since 0.1.0
+     * @version 0.1.0
+     *
+     * @param obj The object(s) to stream
+     * @param <T> The type of the objects and stream
+     * @return A {@link Stream<T>} of the iterable elements
+     */
+    public static <T> Stream<T> stream(T... obj) {
+        return Arrays.stream(obj);
     }
 
 }
