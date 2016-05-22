@@ -25,11 +25,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -43,6 +48,17 @@ import org.json.simple.parser.ParseException;
 public class Json extends FileDataType {
 
     private static final ThreadLocal<JSONParser> JSON_PARSER = ThreadLocal.withInitial(JSONParser::new);
+    private static final ContainerFactory ORDERED = new ContainerFactory() {
+        @Override
+        public Map createObjectContainer() {
+            return new LinkedHashMap<>();
+        }
+
+        @Override
+        public List creatArrayContainer() {
+            return new LinkedList<>();
+        }
+    };
 
     /**
      * Reads and loads a JSON file into memory
@@ -61,34 +77,21 @@ public class Json extends FileDataType {
         super(null);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @throws IOException {@inheritDoc}
-     */
     @Override
-    public void save() throws IOException {
-        this.save(this.location);
-    }
-
-    @Override
-    protected JSONObject readRaw(File target) throws IOException {
+    protected Map<String, Object> readRaw(File target) throws IOException {
         if (FileUtils.readFileToString(target).trim().isEmpty()) {
             return this.newSection();
         }
         try {
-            return (JSONObject) JSON_PARSER.get().parse(new FileReader(target));
+            return (Map<String, Object>) JSON_PARSER.get().parse(new FileReader(target), ORDERED);
         } catch (ParseException e) {
             throw new IOException(e);
         }
     }
 
     @Override
-    public JSONObject serializeMap(Map<String, Object> toFileFormat) {
-        JSONObject obj = this.newSection();
+    public Map<String, Object> serializeMap(Map<String, Object> toFileFormat) {
+        Map<String, Object> obj = this.newSection();
         toFileFormat.forEach((k, v) -> {
             obj.put(k, this.parseSerializable(v));
         });
@@ -114,62 +117,80 @@ public class Json extends FileDataType {
 
     @Override
     public Object deserializeArray(Object array) {
-        if (array instanceof JSONArray) {
-            JSONArray arr = (JSONArray) array;
-            arr.replaceAll(this::parseDeserializable);
+        if (array instanceof List) {
+            ((List<Object>) array).replaceAll(this::parseDeserializable);
         }
         return array;
     }
 
     @Override
-    protected JSONObject newSection() {
-        return new JSONObject();
+    protected Map<String, Object> newSection() {
+        return ORDERED.createObjectContainer();
     }
 
     @Override
     public String toString() {
-        return Json.format(this.getRoot().toJSONString());
-    }
-
-    @Override
-    protected JSONObject getRoot() {
-        return (JSONObject) super.getRoot();
+        return this.toString(this.getRoot());
     }
 
     public static String format(String json) {
         int level = 0;
         StringBuilder sb = new StringBuilder();
         char[] itr = json.toCharArray();
+        boolean text = false;
+        boolean newlined = false;
         for (int i = 0; i < itr.length; i++) {
-            switch(itr[i]) {
+            switch(itr[i]) { //precheck
                 case '}':
                 case ']':
-                    level--;
-                    sb.append(FileDataType.NEWLINE);
-                    for (int w = 0; w < level; w++) {
-                        sb.append("    "); //4 spaces
+                    if (!text) {
+                        level--;
+                        sb.append(FileDataType.NEWLINE);
+                        for (int w = 0; w < level; w++) {
+                            sb.append("    "); //4 spaces
+                        }
+                        newlined = true;
                     }
+                    break;
+                case '"':
+                    text = !text;
                     break;
             }
+            switch(itr[i]) { //newline sanity
+                case '\n':
+                case ' ':
+                    if (newlined) {
+                        continue;
+                    }
+                    break;
+                default:
+                    if (newlined) {
+                        newlined = false;
+                    }
+            }
             sb.append(itr[i]);
-            switch(itr[i]) {
-                case ':':
-                    sb.append(' ');
-                    break;
-                case ',':
-                    sb.append(FileDataType.NEWLINE);
-                    for (int w = 0; w < level; w++) {
-                        sb.append("    "); //4 spaces
-                    }
-                    break;
-                case '{':
-                case '[':
-                    level++;
-                    sb.append(FileDataType.NEWLINE);
-                    for (int w = 0; w < level; w++) {
-                        sb.append("    "); //4 spaces
-                    }
-                    break;
+            if (!text) { //postcheck
+                switch(itr[i]) {
+                    case ':':
+                        sb.append(' ');
+                        break;
+                    case ',':
+                        sb.append(FileDataType.NEWLINE);
+                        for (int w = 0; w < level; w++) {
+                            sb.append("    "); //4 spaces
+                        }
+                        newlined = true;
+                        break;
+                    case '{':
+                    case '[':
+                        level++;
+                        sb.append(FileDataType.NEWLINE);
+                        for (int w = 0; w < level; w++) {
+                            sb.append("    "); //4 spaces
+                        }
+                        newlined = true;
+                        break;
+                }
             }
         }
         return sb.toString();
@@ -180,7 +201,7 @@ public class Json extends FileDataType {
         if (section instanceof JSONObject) {
             return Json.format(((JSONObject) section).toJSONString());
         } else {
-            return Json.format(section.toString()); //hope it doesn't break shit
+            return Json.format(JSONValue.toJSONString(section)); //hope it doesn't break shit
         }
     }
 }
