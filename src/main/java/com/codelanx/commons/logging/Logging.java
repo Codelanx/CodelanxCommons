@@ -21,15 +21,18 @@ package com.codelanx.commons.logging;
 
 import com.codelanx.commons.util.Reflections;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 import java.util.logging.Filter;
+import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 /**
  * This is a simple proxy to a plugin's {@link Logger} class.
@@ -58,6 +61,8 @@ public final class Logging {
     public static void setNicerFormat() {
         //See: https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html
         Logging.setGlobalFormat("[%1$tH:%1$tM:%1$tS] %4$s: %5$s%n");
+        Formatter f = new SimpleFormatter();
+        Arrays.stream(Logging.getHandlers()).forEach(h -> h.setFormatter(f));
     }
 
     /**
