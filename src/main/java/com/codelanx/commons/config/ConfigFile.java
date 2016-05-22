@@ -109,7 +109,7 @@ public interface ConfigFile extends InfoFile {
         Collection<G> col = this.as(collection);
         for (Object o : col) {
             if (!type.isInstance(o)) {
-                throw new ClassCastException("Inappropriate generic type for collection");
+                throw new ClassCastException("Inappropriate generic type for collection (Found: " + o.getClass().toString() + ", Attempted: " + type.toString() + ")");
             }
         }
         return (T) col;
