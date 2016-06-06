@@ -31,6 +31,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
@@ -502,8 +504,8 @@ public final class Reflections {
     /**
      * Façade method for streaming {@link Iterable<T>}, so that Iterable can be accepted as a general parameter
      *
-     * @since 0.1.0
-     * @version 0.1.0
+     * @since 0.3.0
+     * @version 0.3.0
      *
      * @param itr The {@link Iterable<T>} to turn into a stream
      * @param <T> The type of the stream
@@ -520,8 +522,8 @@ public final class Reflections {
     /**
      * Façade method for arrays, to simplify accepting general parameters even further
      *
-     * @since 0.1.0
-     * @version 0.1.0
+     * @since 0.3.0
+     * @version 0.3.0
      *
      * @param obj The object(s) to stream
      * @param <T> The type of the objects and stream
@@ -529,6 +531,26 @@ public final class Reflections {
      */
     public static <T> Stream<T> stream(T... obj) {
         return Arrays.stream(obj);
+    }
+
+    /**
+     * Converts a stack trace into a String for ease-of-use in network-level debugging
+     *
+     * @since 0.3.0
+     * @version 0.3.0
+     *
+     * @param t The {@link Throwable}
+     * @return A String form of the exception
+     */
+    public static String stackTraceToString(Throwable t) {
+        try (StringWriter sw = new StringWriter();
+             PrintWriter pw = new PrintWriter(sw)) {
+            t.printStackTrace(pw);
+            return sw.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return t.toString(); //not the best, but better than null
     }
 
 }
