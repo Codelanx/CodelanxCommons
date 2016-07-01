@@ -339,10 +339,13 @@ public final class Reflections {
      * Performs an operation with a lock, saving room by not requiring a lot of
      * {@code try-finally} blocks
      *
+     * @since 0.2.0
+     * @version 0.2.0
+     *
+     * @param <R> The return type of the {@link Supplier}
      * @param lock      The {@link Lock} to utilize
      * @param operation The code to be run
-     * @version 0.2.0
-     * @since 0.2.0
+     * @return A value returned from the inner {@link Supplier}
      */
     public static <R> R operateLock(Lock lock, Supplier<R> operation) {
         lock.lock();
@@ -502,14 +505,14 @@ public final class Reflections {
     }
 
     /**
-     * Façade method for streaming {@link Iterable<T>}, so that Iterable can be accepted as a general parameter
+     * Façade method for streaming {@link Iterable}, so that Iterable can be accepted as a general parameter
      *
      * @since 0.3.0
      * @version 0.3.0
      *
-     * @param itr The {@link Iterable<T>} to turn into a stream
+     * @param itr The {@link Iterable} to turn into a stream
      * @param <T> The type of the stream
-     * @return A {@link Stream<T>} of the iterable elements
+     * @return A {@link Stream} of the iterable elements
      */
     public static <T> Stream<T> stream(Iterable<T> itr) {
         if (itr instanceof Collection) {
@@ -527,7 +530,7 @@ public final class Reflections {
      *
      * @param obj The object(s) to stream
      * @param <T> The type of the objects and stream
-     * @return A {@link Stream<T>} of the iterable elements
+     * @return A {@link Stream} of the iterable elements
      */
     public static <T> Stream<T> stream(T... obj) {
         return Arrays.stream(obj);

@@ -20,6 +20,7 @@
 package com.codelanx.commons.util;
 
 import com.codelanx.commons.util.exception.Exceptions;
+import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.lang3.Validate;
 
 import java.security.SecureRandom;
@@ -87,7 +88,7 @@ public final class RNG {
      * @return A random element
      */
     public static <T> T get(Collection<T> collection) {
-        if (collection.size() == 0) {
+        if (collection.isEmpty()) {
             return null;
         }
         int rand = RNG.THREAD_LOCAL().nextInt(collection.size());
@@ -145,6 +146,17 @@ public final class RNG {
             }
         }
         return back;
+    }
+
+    public static <T> T getFromWeightedMap(Map<T, Double> weights) {
+        if (weights.isEmpty()) {
+            return null;
+        }
+        double chance = THREAD_LOCAL().nextDouble() * weights.values().stream().reduce(0D, Double::sum);
+        AtomicDouble needle = new AtomicDouble();
+        return weights.entrySet().stream().filter((ent) -> {
+            return needle.addAndGet(ent.getValue()) >= chance;
+        }).findFirst().map(Map.Entry::getKey).orElse(null);
     }
 
 

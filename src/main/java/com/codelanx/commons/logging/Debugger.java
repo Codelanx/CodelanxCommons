@@ -184,9 +184,6 @@ public class Debugger {
         JSONObject back = new JSONObject();
         Map<String, Object> additional = opts.attachInfo();
         back.put("project-type", "standalone");
-        if (!additional.isEmpty()) {
-            additional.forEach(back::put);
-        }
         JSONObject system = new JSONObject();
         system.put("name", System.getProperty("os.name"));
         system.put("version", System.getProperty("os.version"));
@@ -200,6 +197,9 @@ public class Debugger {
         back.put("java", java);
         back.put("message", message);
         back.put("error", Exceptions.readableStackTrace(error));
+        if (!additional.isEmpty()) {
+            additional.forEach(back::put);
+        }
         return back;
     }
 

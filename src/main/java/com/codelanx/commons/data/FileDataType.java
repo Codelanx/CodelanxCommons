@@ -67,8 +67,8 @@ public abstract class FileDataType implements DataType {
     private static final ExecutorService SAVER = Executors.newSingleThreadScheduledExecutor();
 
     protected final ReadWriteLock fileLock = new ReentrantReadWriteLock();
-    protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-    protected final IndexLock indexes = new IndexLock();
+    //protected final ReadWriteLock lock = new ReentrantReadWriteLock();
+    //protected final IndexLock indexes = new IndexLock();
     /** The {@link File} location of this {@link FileDataType} */
     protected final File location;
     private final Map<String, Object> root;
@@ -80,12 +80,7 @@ public abstract class FileDataType implements DataType {
             if (this.location == null) {
                 root = this.newSection();
             } else {
-                try {
-                    this.fileLock.readLock().lock();
-                    root = this.readRaw();
-                } finally {
-                    this.fileLock.readLock().unlock();
-                }
+                root = this.readRaw();
             }
         } catch (IOException ex) {
             Debugger.error(ex, "Error loading %s file '%s'", this.getClass().getSimpleName(), location.getPath());
@@ -104,17 +99,17 @@ public abstract class FileDataType implements DataType {
      */
     public void set(String path, Object value) {
         String[] ladder = FileDataType.getLadder(path);
-        Reflections.operateLock(this.lock.readLock(), () -> {
+        //Reflections.operateLock(this.lock.readLock(), () -> {
             Map<String, Object> data = this.traverse(true, ladder);
-            Reflections.operateLock(this.indexes.write(path), () -> {
+            //Reflections.operateLock(this.indexes.write(path), () -> {
                 if (value != null) {
                     data.put(ladder[ladder.length - 1], DEBUG_SERIALIZATION ? this.parseSerializable(value) : value);
                 } else {
                     data.remove(ladder[ladder.length - 1]);
-                    this.indexes.remove(path);
+                    //this.indexes.remove(path);
                 }
-            });
-        });
+            //});
+        //});
     }
 
     /**
@@ -128,10 +123,10 @@ public abstract class FileDataType implements DataType {
      */
     public boolean isSet(String path) {
         String[] ladder = FileDataType.getLadder(path);
-        return Reflections.operateLock(this.lock.readLock(), () -> {
+        //return Reflections.operateLock(this.lock.readLock(), () -> {
             Map<String, Object> data = this.getContainer(ladder);
-            return Reflections.operateLock(this.indexes.read(path), () -> data.containsKey(ladder[ladder.length - 1]));
-        });
+            return data.containsKey(ladder[ladder.length - 1]);//Reflections.operateLock(this.indexes.read(path), () -> data.containsKey(ladder[ladder.length - 1]));
+        //});
     }
 
     /**
@@ -169,14 +164,14 @@ public abstract class FileDataType implements DataType {
      */
     public Object get(String path, Object def) {
         if (!this.isSet(path)) {
-            System.out.println("returning default");
             return def;
         }
         String[] ladder = FileDataType.getLadder(path);
-        Object back = Reflections.operateLock(this.lock.readLock(), () -> {
+        //Object back = Reflections.operateLock(this.lock.readLock(), () -> {
             Map<String, Object> data = this.getContainer(ladder);
-            return Reflections.operateLock(this.indexes.read(path), () -> data.get(ladder[ladder.length - 1]));
-        });
+            //return Reflections.operateLock(this.indexes.read(path), () -> data.get(ladder[ladder.length - 1]));
+            Object back = data.get(ladder[ladder.length - 1]);
+        //});
         return this.parseDeserializable(back);
     }
 
@@ -203,9 +198,8 @@ public abstract class FileDataType implements DataType {
      */
     public void save(File target) throws IOException {
         Validate.notNull(target, "Cannot save to a null file");
-        Map<String, Object> out = this.serializationCopy();
         Runnable r = () -> {
-            boolean lock = target.equals(this.location);
+            boolean lock = false;//target.equals(this.location);
             if (lock) {
                 this.fileLock.writeLock().lock();
             }
@@ -218,6 +212,10 @@ public abstract class FileDataType implements DataType {
                 }
             }
         };
+        r.run();
+        if (true) {
+            return;
+        }
         if (SAVER.isShutdown() || SAVER.isTerminated()) {
             r.run();
         } else {
@@ -226,12 +224,20 @@ public abstract class FileDataType implements DataType {
     }
 
     private void writeRaw(File target) {
+        System.out.println("getting copy");
+        Map<String, Object> out = this.serializationCopy(); //for now this is outside so a deadlock won't wipe a file
+        System.out.println("writing to file");
         try (FileWriter fw = new FileWriter(target)) {
-            fw.write(this.toString(this.serializationCopy()));
+            System.out.println("new: " + out);
+            fw.write(this.toString(out));
+            System.out.println("written and flushing now...");
             fw.flush();
         } catch (IOException e) {
             System.err.println("Error saving file to target");
             e.printStackTrace();
+        } catch (Exception ex) {
+            System.out.println("asdkjagsdh");
+            ex.printStackTrace(System.err);
         }
     }
 
@@ -328,13 +334,16 @@ public abstract class FileDataType implements DataType {
     }
 
     final Map<String, Object> serializationCopy() {
-        return Reflections.operateLock(this.lock.writeLock(), () -> this.serializationCopy(this.getRoot()));
+        //System.out.println("lock#write: " + this.lock.writeLock().tryLock());
+        return this.serializationCopy(this.getRoot());//Reflections.operateLock(this.lock.writeLock(), () -> this.serializationCopy(this.getRoot()));
     }
 
     protected final Map<String, Object> serializationCopy(Map<String, Object> original) {
+        System.out.println("Starting serialization copy");
         Map<String, Object> back = this.newSection();
         back.putAll(original);
         back.replaceAll((k, v) -> this.parseSerializable(v));
+        System.out.println("returning: " + back);
         return back;
     }
 
@@ -370,7 +379,8 @@ public abstract class FileDataType implements DataType {
      * Reads all the information currently saved in the file, disregarding
      * any changes in memory
      *
-     * @return
+     * @return The raw {@code Map<String, Object>} value of the file
+     * @throws IOException If the file could not be read
      */
     protected Map<String, Object> readRaw() throws IOException {
         this.fileLock.readLock().lock();
@@ -386,7 +396,8 @@ public abstract class FileDataType implements DataType {
      * any changes in memory
      *
      * @param target The {@link File} to be read
-     * @return
+     * @return The raw {@code Map<String, Object>} value of the {@code target} {@link File}
+     * @throws IOException If the file could not be read
      */
     protected abstract Map<String, Object> readRaw(File target) throws IOException;
 
