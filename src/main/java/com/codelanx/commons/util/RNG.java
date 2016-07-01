@@ -96,7 +96,10 @@ public final class RNG {
             return ((List<T>) collection).get(rand);
         } else {
             Iterator<T> itr = collection.iterator();
-            return IntStream.range(0, collection.size()).boxed().map(i -> {
+            return IntStream.range(0, collection.size()).boxed().filter(i -> {
+                itr.next();
+                return i == rand;
+            }).map(i -> {
                 T var = itr.next();
                 return i == rand ? var : null;
             }).filter(Lambdas::notNull).findFirst().orElse(null);
@@ -163,7 +166,7 @@ public final class RNG {
      * @return A randomly selected variable, based on the probabilities from the provided {@link Map}
      */
     public static <T> T getFromWeightedMap(Map<T, Double> weights) {
-        if (weights.isEmpty()) {
+        if (weights == null || weights.isEmpty()) {
             return null;
         }
         double chance = THREAD_LOCAL().nextDouble() * weights.values().stream().reduce(0D, Double::sum);
