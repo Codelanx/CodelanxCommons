@@ -148,6 +148,20 @@ public final class RNG {
         return back;
     }
 
+    /**
+     * Returns a random variable from a weighted map, which is a map of objects to their respective
+     * probabilities. An example would be a map of 5 objects, all mapped to 1, 2, 3, 4 and 5. Their
+     * respective probabilities would be {@code weight/map weight}, where {@code map weight} is the
+     * sum of all the weights in the map. The weights do not have to add up to 1 or 100 or any
+     * arbitrary number.
+     *
+     * @since 0.3.1
+     * @version 0.3.1
+     *
+     * @param weights A {@link Map Map<T, Double>} of weighted objects
+     * @param <T> The type of the objects being weighted in the {@link Map}
+     * @return A randomly selected variable, based on the probabilities from the provided {@link Map}
+     */
     public static <T> T getFromWeightedMap(Map<T, Double> weights) {
         if (weights.isEmpty()) {
             return null;
