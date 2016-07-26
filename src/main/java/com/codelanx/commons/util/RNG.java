@@ -19,7 +19,6 @@
  */
 package com.codelanx.commons.util;
 
-import com.codelanx.commons.util.exception.Exceptions;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.lang3.Validate;
 
@@ -27,6 +26,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 /**
@@ -117,11 +117,17 @@ public final class RNG {
      * @param <T> The type of the elements in the collection, and what's returned
      * @return A {@link List} of unique, random elements
      * @throws IllegalArgumentException If {@code amount > collection#size}
+     * @throws IllegalArgumentException If {@code collection} is null
      */
     public static <T> List<T> get(Collection<T> collection, int amount) {
+        Validate.notNull(collection, "Cannot retrieve a value from a null collection");
         Validate.isTrue(amount <= collection.size(), "Amount cannot be greater than the collection size");
         List<T> back = new ArrayList<>();
         if (amount <= 0 || collection.size() == 0) {
+            return back;
+        }
+        if (amount == 1 || collection.size() == 1) {
+            back.add(RNG.get(collection));
             return back;
         }
         Random r = RNG.THREAD_LOCAL();
@@ -175,6 +181,5 @@ public final class RNG {
             return needle.addAndGet(ent.getValue()) >= chance;
         }).findFirst().map(Map.Entry::getKey).orElse(null);
     }
-
 
 }
