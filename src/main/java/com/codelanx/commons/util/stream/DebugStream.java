@@ -211,7 +211,7 @@ public class DebugStream<T> implements Stream<T>, DebuggableStreaming<T> {
 
     @Override
     public <R> Stream<R> map(Function<? super T, ? extends R> mapper) {
-        return DebugStream.of(this.operate(s -> s.map(mapper)), this.outputResults, (Class<? extends DebugStream<R>>) this.getClass());
+        return DebugStream.of(this.operate(s -> s.map(mapper)), this.outputResults, this.getClass());
     }
 
     @Override
@@ -231,7 +231,7 @@ public class DebugStream<T> implements Stream<T>, DebuggableStreaming<T> {
 
     @Override
     public <R> Stream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper) {
-        return DebugStream.of(this.operate(s -> s.flatMap(mapper)), this.outputResults, (Class<? extends DebugStream<R>>) this.getClass());
+        return DebugStream.of(this.operate(s -> s.flatMap(mapper)), this.outputResults, this.getClass());
     }
 
     @Override

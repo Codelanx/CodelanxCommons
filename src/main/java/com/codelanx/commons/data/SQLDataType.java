@@ -270,7 +270,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
             try {
                 this.getConnection().setAutoCommit(set);
             } catch (SQLException ex) {
-                Debugger.error(ex, "Error setting MySQL#setAutoCommit");
+                Debugger.error(ex, "Error setting " + this.getClass().getSimpleName() + "#setAutoCommit");
             }
         }
     }
