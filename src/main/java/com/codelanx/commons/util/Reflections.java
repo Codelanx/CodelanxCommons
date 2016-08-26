@@ -35,7 +35,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -131,7 +130,7 @@ public final class Reflections {
         Validate.isTrue(offset >= 0, "Offset must be a positive number");
         StackTraceElement[] elems = Thread.currentThread().getStackTrace();
         if (elems.length < 4 + offset) {
-            //We shouldn't be able to get this high on the stack at theoritical offset 0
+            //We shouldn't be able to get this high on the stack at theoretical offset 0
             throw new IndexOutOfBoundsException("Offset too large for current stack");
         }
         return elems[3 + offset];
