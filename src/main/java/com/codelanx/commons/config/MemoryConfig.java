@@ -2,10 +2,14 @@ package com.codelanx.commons.config;
 
 import com.codelanx.commons.data.FileDataType;
 
-public interface MemoryConfig extends ConfigFile {
+public interface MemoryConfig<T> extends ConfigFile {
 
     @Override
-    Object get();
+    default public Object get() {
+        return this.getValue();
+    }
+
+    T getValue();
 
     @Override
     default public String getPath() {
@@ -20,11 +24,11 @@ public interface MemoryConfig extends ConfigFile {
 
     @Override
     default public ConfigFile set(Object val) {
-        this.setValue(val);
+        this.setValue((T) val);
         return null;
     }
 
-    void setValue(Object val);
+    void setValue(T val);
 
     @Override
     default public DataHolder<? extends FileDataType> getData() {
