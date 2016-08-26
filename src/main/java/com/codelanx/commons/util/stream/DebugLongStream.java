@@ -117,6 +117,7 @@ public class DebugLongStream implements LongStream, DebuggableStreaming<Long> {
      * @version 0.3.1
      *
      * @param stream The {@link LongStream} to create a {@link DebugLongStream} of.
+     * @param outputResults {@code true} to output the results of the {@link LongStream} as it is operated upon
      * @param type The class representing the type of the {@link DebugLongStream} to instantiate
      * @return A new {@link DebugLongStream} of the provided {@link LongStream}, or the base class instance of
      *         {@link DebugLongStream} if the type either failed to instantiate or was {@code null}.
@@ -151,7 +152,7 @@ public class DebugLongStream implements LongStream, DebuggableStreaming<Long> {
      * {@code DebugStream#filter[2]: &lt;result&gt;}. The output of {@code result} will be substringed to a maximum
      * of 50 characters, to keep the console from being spammed with large datasets. Additionally, method names with
      * differing method parameters will be grouped under the same aliases and therefore, the same method "counter".
-     * <br /><br />
+     * <br><br>
      * Please note the performance impacts of this method, if this is a standard stream operation and result output
      * is enabled, the {@link Stream} will need to be recreated each time.
      *

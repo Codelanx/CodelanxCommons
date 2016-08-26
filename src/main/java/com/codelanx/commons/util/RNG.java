@@ -167,7 +167,7 @@ public final class RNG {
      * @since 0.3.1
      * @version 0.3.1
      *
-     * @param weights A {@link Map Map<T, Double>} of weighted objects
+     * @param weights A {@link Map Map&lt;T, Double&gt;} of weighted objects
      * @param <T> The type of the objects being weighted in the {@link Map}
      * @return A randomly selected variable, based on the probabilities from the provided {@link Map}
      */

@@ -120,6 +120,7 @@ public class DebugStream<T> implements Stream<T>, DebuggableStreaming<T> {
      * @version 0.3.1
      *
      * @param stream The {@link Stream} to create a {@link DebugStream} of.
+     * @param outputResults {@code true} to output the results of the {@link Stream Stream&lt;T&gt;} as it is operated upon
      * @param type The class representing the type of the {@link DebugStream} to instantiate
      * @param <D> The type of the {@link Stream} elements
      * @return A new {@link DebugStream} of the provided {@link Stream}, or the base class instance of
@@ -155,7 +156,7 @@ public class DebugStream<T> implements Stream<T>, DebuggableStreaming<T> {
      * {@code DebugStream#filter[2]: &lt;result&gt;}. The output of {@code result} will be substringed to a maximum
      * of 50 characters, to keep the console from being spammed with large datasets. Additionally, method names with
      * differing method parameters will be grouped under the same aliases and therefore, the same method "counter".
-     * <br /><br />
+     * <br><br>
      * Please note the performance impacts of this method, if this is a standard stream operation and result output
      * is enabled, the {@link Stream} will need to be recreated each time.
      *
