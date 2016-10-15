@@ -126,7 +126,11 @@ public final class RNG {
         if (amount <= 0 || collection.size() == 0) {
             return back;
         }
-        if (amount == 1 || collection.size() == 1) {
+        if (amount == 1) {
+            if (collection.size() == 1) {
+                back.add(collection.iterator().next());
+                return back;
+            }
             back.add(RNG.get(collection));
             return back;
         }
