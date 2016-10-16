@@ -5,9 +5,11 @@ import com.codelanx.commons.util.Reflections;
 import org.json.simple.JSONObject;
 import org.yaml.snakeyaml.DumperOptions;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +40,11 @@ public class Yaml extends FileDataType {
 
     @Override
     protected Map<String, Object> readRaw(File target) throws IOException {
-        return (Map<String, Object>) CRYPTEX.get().load(Files.newBufferedReader(target.toPath()));
+        Object o = CRYPTEX.get().load(Files.newBufferedReader(target.toPath()));
+        if (o == null) {
+            return this.newSection();
+        }
+        return (Map<String, Object>) o;
     }
 
     @Override
