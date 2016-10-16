@@ -100,8 +100,12 @@ public interface InfoFile {
                 "'" + clazz.getName() + "' is missing the RelativePath annotation");
         String val = clazz.getAnnotation(RelativePath.class).value();
         val = val.replace('/', File.separatorChar);
+        System.out.println("File location: " + val);
         File f = new File(val);
-        f.getParentFile().mkdirs();
+        System.out.println("Parent dir: " + f.getParentFile());
+        if (f.getParentFile() != null) {
+            f.getParentFile().mkdirs();
+        }
         return f;
     }
 
