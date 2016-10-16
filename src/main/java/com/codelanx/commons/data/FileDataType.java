@@ -379,8 +379,8 @@ public abstract class FileDataType implements DataType {
      * Reads all the information currently saved in the file, disregarding
      * any changes in memory
      *
-     * @return The raw {@link Map Map<String, Object>} value of the file. This method
-     *         must return an empty {@link Map Map<String, Object>} if the file is
+     * @return The raw {@link Map Map&lt;String, Object&gt;} value of the file. This method
+     *         must return an empty {@link Map Map&lt;String, Object&gt;} if the file is
      *         empty or a reader returns null.
      * @throws IOException If the file could not be read
      */
@@ -398,8 +398,8 @@ public abstract class FileDataType implements DataType {
      * any changes in memory
      *
      * @param target The {@link File} to be read
-     * @return The raw {@code Map<String, Object>} value of the {@code target} {@link File}
-     *         This method must return an empty {@link Map Map<String, Object>} if the
+     * @return The raw {@link Map Map&lt;String, Object&gt;} value of the {@code target} {@link File}
+     *         This method must return an empty {@link Map Map&lt;String, Object&gt;} if the
      *         file is empty or a reader returns null.
      * @throws IOException If the file could not be read
      */
