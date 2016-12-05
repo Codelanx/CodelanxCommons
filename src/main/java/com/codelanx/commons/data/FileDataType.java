@@ -495,7 +495,16 @@ public abstract class FileDataType implements DataType {
         return this.traverse(false, ladder);
     }
 
-    protected Map<String, Object> getRoot() {
+    /**
+     * The root node of this {@link FileDataType}
+     *
+     * @since 0.3.2
+     * @version 0.3.2
+     * @deprecated Public as convenience, may not be exposed when more proper api comes around (key iteration)
+     *
+     * @return The root {@link Map} that represents this {@link FileDataType}
+     */
+    public Map<String, Object> getRoot() {
         return this.root;
     }
 
