@@ -44,6 +44,14 @@ public class MySQL implements SQLDataType {
     private boolean errors = true;
     private Connection con = null;
 
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver"); //init driver
+        } catch (ClassNotFoundException ex) {
+            throw new IllegalStateException("No driver found for MySQL, aborting class resolution", ex);
+        }
+    }
+
     /**
      * Creates a new {@link MySQL} object for use in working with a database
      *

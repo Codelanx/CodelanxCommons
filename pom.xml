@@ -77,6 +77,7 @@
                                     <include>org.yaml:snakeyaml</include>
                                     <include>com.googlecode.json-simple:json-simple</include>
                                     <include>commons-io:commons-io</include>
+                                    <include>mysql:mysql-connector-java</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
@@ -161,6 +162,8 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>6.0.5</version>
+            <type>jar</type>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
