@@ -30,6 +30,10 @@ public class ImplicitSortedList<E> extends ArrayList<E> {
     //null if natural sorting, otherwise defined sort
     private final Comparator<? super E> comparator;
 
+    public ImplicitSortedList() {
+        this.comparator = null;
+    }
+
     public ImplicitSortedList(int capacity) {
         super(capacity);
         this.comparator = null;
