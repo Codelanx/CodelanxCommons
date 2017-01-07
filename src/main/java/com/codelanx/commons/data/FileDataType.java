@@ -325,7 +325,9 @@ public abstract class FileDataType implements DataType {
     }
 
     protected final Object parseDeserializable(Object o) {
-        if (o instanceof Map) {
+        if (o == null) {
+            return null;
+        } else if (o instanceof Map) {
             return this.deserializeMap((Map<String, Object>) o);
         } else if (o.getClass().isArray() || o instanceof List) {
             return this.deserializeArray(o);
