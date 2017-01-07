@@ -74,7 +74,7 @@ public class ImplicitSortedList<E> extends ArrayList<E> {
 
     @Override
     public void sort(Comparator<? super E> c) {
-        throw new UnsupportedOperationException(this.getClass().getSimpleName() + " utilizes a comparator on struction");
+        throw new UnsupportedOperationException(this.getClass().getSimpleName() + " utilizes a comparator on construction");
     }
 
     @Override
