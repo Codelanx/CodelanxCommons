@@ -25,9 +25,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 /**
  * Represents an object that connects to an SQL database and allows operations
@@ -190,9 +192,11 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @param batchSize The size of each batch
      * @param params The objects to use in each batch
      * @param paramMappers A series of functions for mapping objects to params
+     * @return An int of the total rows affected for all operations
      */
-    default public <T> void batchUpdate(String query, int batchSize, Collection<T> params, Function<T, ?>... paramMappers) {
+    default public <T> int batchUpdate(String query, int batchSize, Collection<T> params, Function<T, ?>... paramMappers) {
         PreparedStatement stmt = null;
+        int back = 0;
         try {
             stmt = this.prepare(query);
             this.setAutoCommit(false);
@@ -204,12 +208,12 @@ public interface SQLDataType extends DataType, AutoCloseable {
                 }
                 stmt.addBatch();
                 if (i >= batchSize) {
-                    stmt.executeBatch();
+                    back += IntStream.of(stmt.executeBatch()).reduce(0, Integer::sum);
                     this.commit();
                     i = 1;
                 }
             }
-            stmt.executeBatch();
+            back += IntStream.of(stmt.executeBatch()).reduce(0, Integer::sum);
             this.commit();
             this.setAutoCommit(true);
         } catch (SQLException ex) {
@@ -219,6 +223,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
         } finally {
             Databases.close(stmt);
         }
+        return back;
     }
 
     /**
