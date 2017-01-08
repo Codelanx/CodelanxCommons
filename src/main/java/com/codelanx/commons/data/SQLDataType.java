@@ -157,9 +157,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
                 Debugger.error(ex, "Error in SQL operation: %s", Databases.simpleErrorOutput(ex));
             }
         } finally {
-            if (stmt != null) {
-                Databases.close(stmt);
-            }
+            Databases.close(stmt);
         }
         resp.setUpdatedRows(back);
         return resp;
@@ -219,9 +217,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
                 Debugger.error(ex, "Error in SQL operation: %s", Databases.simpleErrorOutput(ex));
             }
         } finally {
-            if (stmt != null) {
-                Databases.close(stmt);
-            }
+            Databases.close(stmt);
         }
     }
 
