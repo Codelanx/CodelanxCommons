@@ -141,11 +141,11 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @param sql The sql string
      * @param params The sql parameters to be bound to the statement
      * @param <R> The return type
-     * @see SQLDataType#query(SQLFunction, String, Object...)
+     * @see SQLDataType#select(SQLBiFunction, int, String, Object...)
      * @return The result of this query
      */
     default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, Integer, R> oper, String sql, Object... params) {
-        return this.select(rs -> oper.apply(rs, 0), sql, params);
+        return this.select(oper, 0, sql, params);
     }
 
     /**
