@@ -56,7 +56,7 @@ public interface SQLFunction<T, R> {
      * @since 0.1.0
      * @version 0.1.0
      *
-     * @see SQLFunction#andThen(Function)
+     * @see SQLFunction#andThen(SQLFunction)
      * @param <V> the type of input to the {@code before} function, and to the
      *           composed function
      * @param before the function to apply before this function is applied
@@ -64,7 +64,7 @@ public interface SQLFunction<T, R> {
      * function and then applies this function
      * @throws NullPointerException if before is null
      */
-    default <V> SQLFunction<V, R> compose(Function<? super V, ? extends T> before) {
+    default <V> SQLFunction<V, R> compose(SQLFunction<? super V, ? extends T> before) {
         Objects.requireNonNull(before);
         return (V v) -> this.apply(before.apply(v));
     }
@@ -78,7 +78,7 @@ public interface SQLFunction<T, R> {
      * @since 0.1.0
      * @version 0.1.0
      *
-     * @see SQLFunction#compose(Function)
+     * @see SQLFunction#compose(SQLFunction)
      * @param <V> The type of output of the {@code after} function, and of the
      *           composed function
      * @param after the function to apply after this function is applied
@@ -86,22 +86,10 @@ public interface SQLFunction<T, R> {
      *         applies the {@code after} function
      * @throws NullPointerException if {@code after} is null
      */
-    default <V> SQLFunction<T, V> andThen(Function<? super R, ? extends V> after) {
+    default <V> SQLFunction<T, V> andThen(SQLFunction<? super R, ? extends V> after) {
         Objects.requireNonNull(after);
         return (T t) -> after.apply(apply(t));
     }
 
-    /**
-     * Returns a function that always returns its input argument.
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     *
-     * @param <T> the type of the input and output objects to the function
-     * @return a function that always returns its input argument
-     */
-    static <T> SQLFunction<T, T> identity() {
-        return t -> t;
-    }
 
 }

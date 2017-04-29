@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -105,8 +106,8 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * {@link ResultSet#next} is not necessary to call. If the returned result is empty,
      * then
      *
-     * @since 0.3.3
-     * @version 0.3.3
+     * @since 0.3.2
+     * @version 0.3.2
      *
      * @param oper The operation to perform on a row
      * @param sql The sql string
@@ -122,6 +123,79 @@ public interface SQLDataType extends DataType, AutoCloseable {
             }
             return null;
         }, sql, params);
+    }
+
+    /**
+     * Strictly speaking, this is a facade method for #select which allows you
+     * to retrieve not only the first row but the first column as a result, and use
+     * the first parameter to map the value from a ResultSet to an object. For example:
+     * <br /><br />
+     *     {@code select(ResultSet::getInt, "SELECT 5")}
+     *
+     * @since 0.3.2
+     * @version 0.3.2
+     *
+     * @param oper An {@link SQLBiFunction} which consumes the given {@link ResultSet},
+     *             with the second argument defining the column index to select from
+     *             the results
+     * @param sql The sql string
+     * @param params The sql parameters to be bound to the statement
+     * @param <R> The return type
+     * @see SQLDataType#query(SQLFunction, String, Object...)
+     * @return The result of this query
+     */
+    default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, Integer, R> oper, String sql, Object... params) {
+        return this.select(rs -> oper.apply(rs, 0), sql, params);
+    }
+
+    /**
+     * Strictly speaking, this is a facade method for #select which allows you
+     * to retrieve not only the first row but the selected column as a result, and use
+     * the first parameter to map the value from a ResultSet to an object. For example:
+     * <br /><br />
+     *     {@code select(ResultSet::getInt, 3, "SELECT 10, 8, 6, 4, 2") //returns 3rd column, 6}
+     *
+     * @since 0.3.2
+     * @version 0.3.2
+     *
+     * @param oper An {@link SQLBiFunction} which consumes the given {@link ResultSet},
+     *             with the second argument defining the column index to select from
+     *             the result
+     *
+     * @param column the index of the column to select
+     * @param sql The sql string
+     * @param params The sql parameters to be bound to the statement
+     * @param <R> The return type
+     * @see SQLDataType#query(SQLFunction, String, Object...)
+     * @return The result of this query
+     */
+    default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, Integer, R> oper, int column, String sql, Object... params) {
+        return this.select(rs -> oper.apply(rs, column), sql, params);
+    }
+
+    /**
+     * Strictly speaking, this is a facade method for #select which allows you
+     * to retrieve not only the first row but the selected column as a result, and use
+     * the first parameter to map the value from a ResultSet to an object. For example:
+     * <br /><br />
+     *     {@code select(ResultSet::getInt, "bob", "SELECT 1 AS joe, 2 AS bob") //returns bob column, 6}
+     *
+     * @since 0.3.2
+     * @version 0.3.2
+     *
+     * @param oper An {@link SQLBiFunction} which consumes the given {@link ResultSet},
+     *             with the second argument defining the column index to select from
+     *             the result
+     *
+     * @param columnName the name of the column to select
+     * @param sql The sql string
+     * @param params The sql parameters to be bound to the statement
+     * @param <R> The return type
+     * @see SQLDataType#query(SQLFunction, String, Object...)
+     * @return The result of this query
+     */
+    default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, String, R> oper, String columnName, String sql, Object... params) {
+        return this.select(rs -> oper.apply(rs, columnName), sql, params);
     }
 
     /**
