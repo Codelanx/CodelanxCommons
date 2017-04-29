@@ -129,7 +129,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * Strictly speaking, this is a facade method for #select which allows you
      * to retrieve not only the first row but the first column as a result, and use
      * the first parameter to map the value from a ResultSet to an object. For example:
-     * <br /><br />
+     * <br><br>
      *     {@code select(ResultSet::getInt, "SELECT 5")}
      *
      * @since 0.3.2
@@ -152,7 +152,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * Strictly speaking, this is a facade method for #select which allows you
      * to retrieve not only the first row but the selected column as a result, and use
      * the first parameter to map the value from a ResultSet to an object. For example:
-     * <br /><br />
+     * <br><br>
      *     {@code select(ResultSet::getInt, 3, "SELECT 10, 8, 6, 4, 2") //returns 3rd column, 6}
      *
      * @since 0.3.2
@@ -177,7 +177,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * Strictly speaking, this is a facade method for #select which allows you
      * to retrieve not only the first row but the selected column as a result, and use
      * the first parameter to map the value from a ResultSet to an object. For example:
-     * <br /><br />
+     * <br><br>
      *     {@code select(ResultSet::getInt, "bob", "SELECT 1 AS joe, 2 AS bob") //returns bob column, 6}
      *
      * @since 0.3.2
