@@ -19,6 +19,10 @@
  */
 package com.codelanx.commons.util.ref;
 
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 /**
  * Represents a wrapper class for a pair of objects
  *
@@ -75,5 +79,9 @@ public class Tuple<E, T> {
     @Override
     public String toString() {
         return "[" + this.one + ", " + this.two + "]";
+    }
+
+    public static <K, V> Collector<Tuple<K, V>, ?, Map<K, V>> toMap() {
+        return Collectors.toMap(Tuple::getFirst, Tuple::getSecond);
     }
 }
