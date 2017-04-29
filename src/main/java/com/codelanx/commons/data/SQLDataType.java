@@ -93,10 +93,35 @@ public interface SQLDataType extends DataType, AutoCloseable {
             if (this.isSendingErrorOutput()) {
                 Debugger.error(ex, "Error in SQL operation: %s", Databases.simpleErrorOutput(ex));
             }
+            return new SQLResponse<>(ex);
         } finally {
             Databases.close(stmt);
         }
         return new SQLResponse<>(back);
+    }
+
+    /**
+     * Works similarly to #query, but will return only the first row. Thus,
+     * {@link ResultSet#next} is not necessary to call. If the returned result is empty,
+     * then
+     *
+     * @since 0.3.3
+     * @version 0.3.3
+     *
+     * @param oper The operation to perform on a row
+     * @param sql The sql string
+     * @param params The sql parameters to be bound to the statement
+     * @param <R> The return type
+     * @see SQLDataType#query(SQLFunction, String, Object...)
+     * @return The result of this query
+     */
+    default public <R> SQLResponse<R> select(SQLFunction<? super ResultRow, R> oper, String sql, Object... params) {
+        return this.query(rs -> {
+            if (rs.next()) {
+                oper.apply(new ResultRow(rs));
+            }
+            return null;
+        }, sql, params);
     }
 
     /**
@@ -112,8 +137,8 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @return An {@link SQLResponse} containing any required information
      */
     @SuppressWarnings("rawtypes")
-    default public SQLResponse query(SQLConsumer<? super ResultSet> oper, String sql, Object... params) {
-        SQLResponse resp = new SQLResponse();
+    default public SQLResponse<?> query(SQLConsumer<? super ResultSet> oper, String sql, Object... params) {
+        SQLResponse resp = SQLResponse.EMPTY.clone();
         PreparedStatement stmt = null;
         try {
             stmt = this.prepare(sql);
@@ -127,6 +152,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
             if (this.isSendingErrorOutput()) {
                 Debugger.error(ex, "Error in SQL operation: %s", Databases.simpleErrorOutput(ex));
             }
+            resp.setException(ex);
         } finally {
             Databases.close(stmt);
         }
@@ -334,6 +360,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
             if (this.isSendingErrorOutput()) {
                 Debugger.error(ex, "Error in SQL operation: %s", Databases.simpleErrorOutput(ex));
             }
+            back.setException(ex);
         } finally {
             if (stmt != null) {
                 Databases.close(stmt);

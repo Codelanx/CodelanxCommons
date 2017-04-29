@@ -23,30 +23,33 @@ import java.sql.SQLException;
 import java.util.function.Consumer;
 
 /**
- * Class description for {@link SQLResponse}
+ * Represents the response from the sql server, whether that be in
+ * the form of an {@link SQLException} or just the returned and
+ * selected value from a query
  *
- * @since 1.0.0
+ * @since 0.1.0
  * @author 1Rogue
- * @version 1.0.0
+ * @version 0.3.2
  * 
  * @param <T> The response content type
  */
-public class SQLResponse<T> {
+public class SQLResponse<T> implements Cloneable {
 
+    public static SQLResponse<?> EMPTY = new SQLResponse<>((Object) null);
     private SQLException ex;
     private T response;
     private int update;
     
     public SQLResponse() {
-        
+
+    }
+
+    public SQLResponse(T response) {
+        this.response = response;
     }
 
     public SQLResponse(SQLException ex) {
         this.ex = ex;
-    }
-    
-    public SQLResponse(T response) {
-        this.response = response;
     }
 
     public SQLResponse(int update) {
@@ -73,14 +76,33 @@ public class SQLResponse<T> {
     }
 
     void setException(SQLException ex) {
+        if (this == EMPTY) {
+            throw new UnsupportedOperationException("Cannot call setters on public constant");
+        }
         this.ex = ex;
     }
     
     void setResponse(T response) {
+        if (this == EMPTY) {
+            throw new UnsupportedOperationException("Cannot call setters on public constant");
+        }
         this.response = response;
     }
     
     void setUpdatedRows(int update) {
+        if (this == EMPTY) {
+            throw new UnsupportedOperationException("Cannot call setters on public constant");
+        }
         this.update = update;
+    }
+
+    @Override
+    protected SQLResponse<T> clone() {
+        try {
+            return (SQLResponse<T>) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return new SQLResponse<>();
     }
 }
