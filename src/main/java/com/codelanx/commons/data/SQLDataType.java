@@ -178,7 +178,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * to retrieve not only the first row but the selected column as a result, and use
      * the first parameter to map the value from a ResultSet to an object. For example:
      * <br><br>
-     *     {@code select(ResultSet::getInt, "bob", "SELECT 1 AS joe, 2 AS bob") //returns bob column, 6}
+     *     {@code selectByName(ResultSet::getInt, "bob", "SELECT 1 AS joe, 2 AS bob") //returns bob column, 6}
      *
      * @since 0.3.2
      * @version 0.3.2
@@ -194,7 +194,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @see SQLDataType#query(SQLFunction, String, Object...)
      * @return The result of this query
      */
-    default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, String, R> oper, String columnName, String sql, Object... params) {
+    default public <R> SQLResponse<R> selectByName(SQLBiFunction<? super ResultRow, String, R> oper, String columnName, String sql, Object... params) {
         return this.select(rs -> oper.apply(rs, columnName), sql, params);
     }
 
