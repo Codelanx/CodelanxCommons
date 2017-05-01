@@ -114,12 +114,12 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @param params The sql parameters to be bound to the statement
      * @param <R> The return type
      * @see SQLDataType#query(SQLFunction, String, Object...)
-     * @return The result of this query
+     * @return The result of this query, or {@code null} if nothing was able to be selected
      */
     default public <R> SQLResponse<R> select(SQLFunction<? super ResultRow, R> oper, String sql, Object... params) {
         return this.query(rs -> {
             if (rs.next()) {
-                oper.apply(new ResultRow(rs));
+                return oper.apply(new ResultRow(rs));
             }
             return null;
         }, sql, params);
@@ -194,7 +194,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @see SQLDataType#query(SQLFunction, String, Object...)
      * @return The result of this query
      */
-    default public <R> SQLResponse<R> selectByName(SQLBiFunction<? super ResultRow, String, R> oper, String columnName, String sql, Object... params) {
+    default public <R> SQLResponse<R> selectByColumn(SQLBiFunction<? super ResultRow, String, R> oper, String columnName, String sql, Object... params) {
         return this.select(rs -> oper.apply(rs, columnName), sql, params);
     }
 
