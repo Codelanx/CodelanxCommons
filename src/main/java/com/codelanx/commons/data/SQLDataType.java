@@ -141,11 +141,11 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @param sql The sql string
      * @param params The sql parameters to be bound to the statement
      * @param <R> The return type
-     * @see SQLDataType#select(SQLBiFunction, int, String, Object...)
+     * @see SQLDataType#selectByColumn(SQLBiFunction, int, String, Object...)
      * @return The result of this query
      */
-    default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, Integer, R> oper, String sql, Object... params) {
-        return this.select(oper, 0, sql, params);
+    default public <R> SQLResponse<R> selectFirst(SQLBiFunction<? super ResultRow, Integer, R> oper, String sql, Object... params) {
+        return this.selectByColumn(oper, 1, sql, params);
     }
 
     /**
@@ -169,7 +169,7 @@ public interface SQLDataType extends DataType, AutoCloseable {
      * @see SQLDataType#query(SQLFunction, String, Object...)
      * @return The result of this query
      */
-    default public <R> SQLResponse<R> select(SQLBiFunction<? super ResultRow, Integer, R> oper, int column, String sql, Object... params) {
+    default public <R> SQLResponse<R> selectByColumn(SQLBiFunction<? super ResultRow, Integer, R> oper, int column, String sql, Object... params) {
         return this.select(rs -> oper.apply(rs, column), sql, params);
     }
 
