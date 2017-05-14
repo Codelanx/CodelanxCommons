@@ -96,13 +96,10 @@ public final class RNG {
             return ((List<T>) collection).get(rand);
         } else {
             Iterator<T> itr = collection.iterator();
-            return IntStream.range(0, collection.size()).boxed().filter(i -> {
-                itr.next();
-                return i == rand;
-            }).map(i -> {
+            return IntStream.range(0, collection.size()).boxed().map(i -> {
                 T var = itr.next();
                 return i == rand ? var : null;
-            }).filter(Lambdas::notNull).findFirst().orElse(null);
+            }).filter(Objects::nonNull).findFirst().orElse(null);
         }
     }
 

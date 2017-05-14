@@ -35,8 +35,11 @@ public class Lambdas {
      * @version 0.1.0
      * 
      * @param o The object to check
+     * @deprecated JDK provides a method
+     * @see java.util.Objects#nonNull(Object) 
      * @return {@code true} if not {@code null}
      */
+    @Deprecated
     public static boolean notNull(Object o) {
         return o != null;
     }
@@ -48,8 +51,11 @@ public class Lambdas {
      * @version 0.1.0
      * 
      * @param o The object to check
+     * @deprecated JDK provides a method
+     * @see java.util.Objects#isNull(Object)
      * @return {@code true} if {@code null}
      */
+    @Deprecated
     public static boolean isNull(Object o) {
         return !Lambdas.notNull(o);
     }
