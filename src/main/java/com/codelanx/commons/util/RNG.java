@@ -26,7 +26,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -138,18 +138,14 @@ public final class RNG {
                 back.add(lis.get(r.nextInt(collection.size())));
             }
         } else {
-            int[] indexes = new int[amount];
-            for (int i = 0; i < amount; i++) {
-                int next = r.nextInt(collection.size());
-                if (Arrays.stream(indexes).noneMatch(c -> c == next)) {
-                    indexes[i] = next;
-                }
-            }
+            List<Integer> indexes = IntStream.range(0, collection.size()).boxed().collect(Collectors.toList());
+            Collections.shuffle(indexes);
+            indexes = indexes.subList(0, amount);
+            Collections.sort(indexes);
             Iterator<T> itr = collection.iterator();
-            Arrays.sort(indexes);
-            for (int i = 0, w = 0; i < amount && w < indexes.length; i++) {
+            for (int i = 0, w = 0; i < amount && w < indexes.size(); i++) {
                 T val = itr.next();
-                if (indexes[w] == i) {
+                if (indexes.get(w) == i) {
                     back.add(val);
                     w++;
                 }
