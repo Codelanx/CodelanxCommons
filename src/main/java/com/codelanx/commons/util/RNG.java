@@ -171,7 +171,7 @@ public final class RNG {
      * @param <T> The type of the objects being weighted in the {@link Map}
      * @return A randomly selected variable, based on the probabilities from the provided {@link Map}
      */
-    public static <T> T getFromWeightedMap(Map<T, Number> weights) {
+    public static <T> T getFromWeightedMap(Map<T, ? extends Number> weights) {
         if (weights == null || weights.isEmpty()) {
             return null;
         }
