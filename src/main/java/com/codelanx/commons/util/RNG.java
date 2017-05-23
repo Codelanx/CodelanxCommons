@@ -94,6 +94,9 @@ public final class RNG {
         if (collection.isEmpty()) {
             return null;
         }
+        if (collection.size() == 1) {
+            return collection.iterator().next();
+        }
         int rand = RNG.THREAD_LOCAL.current().nextInt(collection.size());
         if (collection instanceof List) {
             return ((List<T>) collection).get(rand);
@@ -127,24 +130,17 @@ public final class RNG {
             return back;
         }
         if (amount == 1) {
-            if (collection.size() == 1) {
-                back.add(collection.iterator().next());
-                return back;
-            }
             back.add(RNG.get(collection));
             return back;
         }
-        Random r = RNG.THREAD_LOCAL.current();
+        List<Integer> indexes = IntStream.range(0, collection.size()).boxed().collect(Collectors.toList());
+        Collections.shuffle(indexes);
+        indexes = indexes.subList(0, amount);
+        Collections.sort(indexes);
         if (collection instanceof List) {
             List<T> lis = (List<T>) collection;
-            for (int i = 0; i < amount; i++) {
-                back.add(lis.get(r.nextInt(collection.size())));
-            }
+            indexes.stream().map(lis::get).forEach(back::add);
         } else {
-            List<Integer> indexes = IntStream.range(0, collection.size()).boxed().collect(Collectors.toList());
-            Collections.shuffle(indexes);
-            indexes = indexes.subList(0, amount);
-            Collections.sort(indexes);
             Iterator<T> itr = collection.iterator();
             for (int i = 0, w = 0; i < amount && w < indexes.size(); i++) {
                 T val = itr.next();
