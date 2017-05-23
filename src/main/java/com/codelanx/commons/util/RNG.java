@@ -42,7 +42,7 @@ public final class RNG {
     static {
         Scheduler.runAsyncTaskRepeat(() -> {
             //nobody fuckin' with my secure random
-            RNG.SECURE_RAND.setSeed(RNG.SECURE_RAND.generateSeed(RNG.THREAD_LOCAL().nextInt(30)));
+            RNG.SECURE_RAND.setSeed(RNG.SECURE_RAND.generateSeed(RNG.THREAD_LOCAL.current().nextInt(30)));
         }, 0, TimeUnit.MINUTES.toSeconds(10));
     }
 
@@ -73,8 +73,11 @@ public final class RNG {
      * 
      * @return The {@link ThreadLocalRandom} for the current thread context
      */
-    public static final ThreadLocalRandom THREAD_LOCAL() {
-        return ThreadLocalRandom.current();
+    public static final ThreadLocalRandomWrapper THREAD_LOCAL = ThreadLocalRandom::current;
+    
+    @FunctionalInterface
+    private static interface ThreadLocalRandomWrapper {
+        public ThreadLocalRandom current();
     }
 
     /**
@@ -91,7 +94,7 @@ public final class RNG {
         if (collection.isEmpty()) {
             return null;
         }
-        int rand = RNG.THREAD_LOCAL().nextInt(collection.size());
+        int rand = RNG.THREAD_LOCAL.current().nextInt(collection.size());
         if (collection instanceof List) {
             return ((List<T>) collection).get(rand);
         } else {
@@ -131,7 +134,7 @@ public final class RNG {
             back.add(RNG.get(collection));
             return back;
         }
-        Random r = RNG.THREAD_LOCAL();
+        Random r = RNG.THREAD_LOCAL.current();
         if (collection instanceof List) {
             List<T> lis = (List<T>) collection;
             for (int i = 0; i < amount; i++) {
@@ -172,7 +175,7 @@ public final class RNG {
         if (weights == null || weights.isEmpty()) {
             return null;
         }
-        double chance = THREAD_LOCAL().nextDouble() * weights.values().stream().reduce(0D, Double::sum);
+        double chance = THREAD_LOCAL.current().nextDouble() * weights.values().stream().reduce(0D, Double::sum);
         AtomicDouble needle = new AtomicDouble();
         return weights.entrySet().stream().filter((ent) -> {
             return needle.addAndGet(ent.getValue()) >= chance;
