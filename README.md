@@ -1,24 +1,16 @@
-# CodelanxLib <a href="https://travis-ci.org/CodeLanx/CodelanxLib/builds"><img src="https://api.travis-ci.org/CodeLanx/CodelanxLib.svg" \></a>
-Library for Codelanx plugins. Public use is allowed, but must be credited.
+# CodelanxCommons
+Library for Codelanx Java projects. Public use is allowed, but must be credited.
 
 ## Table of contents
 
-* __[Commands](#commands)__
-* __[Plugin Files](#plugin-file)__
+* __[Configuration](#configuration)__
   * __[Config System](#config)__
   * __[Lang Files](#lang)__
 * __[Data Types](#data)__
   * __[FileDataType](#filedatatype)__
   * __[SQLDataType](#sqldatatype)__
   * __[Concrete Implementations](#data-impl)__
-* __[Economy](#economy)__
-* __[Implementers](#implementers)__
-* __[Inventory](#inventory)__
-  * __[Interfaces](#interfaces)__
-* __[Listeners](#listeners)__
 * __[Logging](#logging)__
-* __[Permissions](#permissions)__
-* __[Serializable classes](#serialize)__
 * __[Utility Classes](#util)__
   * __[Auth](#auth)__
   * __~~Coverage~~__ - Deprecated, will be remade in version 0.3.0
@@ -42,288 +34,32 @@ Library for Codelanx plugins. Public use is allowed, but must be credited.
   * __[Legal](#legal)__
 
 
-##<a name="commands"></a> Commands
+##<a name="configuration"></a> Configuration
 
-__Note__: This section is now obsolete with the introduction of the new
-command system being introduced in the 0.1.0 release
-
-Overall, you will only be dealing with three classes when making commands, and
-most/nearly all of the implementation for this is up to you as the developer.
-Those classes are:
-
-* `CommandHandler` - [Documentation](http://docs.codelanx.com/CodelanxLib/0.1.0/com/codelanx/codelanxlib/command/CommandHandler.html)
-* `CommandStatus` - [Documentation](http://docs.codelanx.com/CodelanxLib/0.1.0/com/codelanx/codelanxlib/command/CommandStatus.html)
-* `SubCommand` - [Documentation](http://docs.codelanx.com/CodelanxLib/0.1.0/com/codelanx/codelanxlib/command/SubCommand.html)
-
-A `CommandHandler` is an object that will handle a specific command in your
-plugin. For instance, let's say we had a channel plugin for chat, we could make
-our "channel" `CommandHandler` like so:
-
-```java
-Plugin p = /* our main plugin instance */;
-CommandHandler channel = new CommandHandler(p, "channel", true);
-```
-
-Great! That starts us off with a basic CommandHandler. This seems relatively
-simple, but under the hood a lot just happened. For starters, there are two
-reserved `SubCommand` classes that universally fill a specific purpose:
-
-* `HelpCommand` - [Documentation](http://docs.codelanx.com/CodelanxLib/0.1.0/com/codelanx/codelanxlib/command/HelpCommand.html)
-* `ReloadCommand` - [Documentation](http://docs.codelanx.com/CodelanxLib/0.1.0/com/codelanx/codelanxlib/command/ReloadCommand.html)
-
-What these commands do (if it isn't immediately obvious) is covered in the
-documentation for both of the classes. If you wish to unregister these commands
-from your handler so as to not allow reloading or help output from that specific
-command, you can use `CommandHandler#unregister(String)`. Continuing
-off our channel example:
-
-```java
-channel.unregister("help"); //Note: 'channel' is a CommandHandler
-channel.unregister("reload");
-```
-
-Additionally, upon our original construction of the `CommandHandler`, we can
-specify that we do not want these classes automatically registered via the
-`boolean` that is passed:
-
-```java
-CommandHandler channel = new CommandHandler(p, "channel", false); //false, will not register
-```
-
-Now that we have our CommandHandler, we should add our own SubCommands! Say we
-want to have a command that allows a person to join a chat channel. The syntax,
-for our purposes, will be something like `/channel join <channel>`. To start,
-let's define our SubCommand:
-
-```java
-public class JoinCommand extends SubCommand<MyChannelPlugin> {
-
-    public JoinCommand(MyChannelPlugin plugin, CommandHandler handler) {
-        super(plugin, handler);
-    }
-
-}
-```
-
-Firstly, let's fill out the two simplest methods first for our command:
-
-```java
-    @Override
-    public String getName() {
-        return "join"; //This is the first argument for "channel", our subcommand's specific name
-    }
-
-    @Override
-    public Lang info() {
-        return Lang.createLang("Allows players to join a channel"); //We get to this later in the plugin file section!
-    }
-```
-
-If you're confused about the `Lang` part here, don't fret! It's completely
-covered under the [Lang section of this readme](#lang). Note that you wouldn't
-want to have a call to `Lang#createLang(String)` in a production environment
-for this method, but for now it helps convey the purpose.
-
-Something that the `SubCommand` class also has is a method for usage, however
-this isn't something you always have to override. By default, the usage printed
-will be `/<main-command> <subcommand-name>`, however if you remember we want
-to add a new argument for channel name, per `/channel join <channel>`, so let's
-do that now:
-
-```java
-    @Override
-    public String getUsage() {
-        return super.getUsage() + " <channel>";
-    }
-```
-
-And with that, it will now always return with the extra ` <channel>` on the end
-of the usage for our subcommand!
-
-Now we're left with the real meat of what your `SubCommand` class will be doing.
-For the purposes of this example, our class will have a `Set<String> channels`
-field which specifies which channels we can join.
-
-For starters, we should fill in the tab completion so that players have an
-easier time tab-completing our commands. That, and it's just cool to have!
-
-```java
-    @Override
-    public List<String> tabComplete(CommandSender sender, String... args) {
-        //From here, we need to return a list based on what has already been typed
-        //The main command and the subcommand name are not included in our arguments array!
-        if (args.length < 1) { //Empty arguments
-            //Return our available channels
-            return new ArrayList<>(this.channels);
-        } else if (args.length == 1) { //potentially auto-completing a word
-            //only return channels that start with the argument
-            return this.channels.stream().filter(c -> c.startsWith(args[0])).collect(Collectors.toList());
-        }
-        return new ArrayList<>(); //catch-all, we don't have anything to provide
-    }
-```
-
-Great! Now our command will auto-complete for anyone who attempts to tab a
-channel name. All this leaves us now is to implement the actual command
-execution. Remember that the concept of returning a boolean no longer exists
-in `SubCommand` objects, we use the `CommandStatus` enum to specify how the
-plugin will react to your command execution.
-
-```java
-    @Override
-    public CommandStatus execute(CommandSender sender, String... args) {
-        if (!(sender instanceof Player)) {
-            return CommandStatus.PLAYER_ONLY; //Only players use channels
-        }
-        //The main command and the subcommand name are not included in our arguments array!
-        if (args.length < 1) { //Empty arguments
-            return CommandStatus.BAD_ARGS;
-        }
-        if (!this.channels.contains(args[0])) { //Make sure channel exists
-            sender.sendMessage("That channel does not exist!");
-            return CommandStatus.SUCCESS; //Success? That seems odd... Explained below!
-        }
-        //At this point, we've confirmed the channel exists, and the sender is a player
-        if (!sender.hasPermission("myplugin.channels." + args[0])) {
-            //Hey! They can't join that channel!
-            return CommandStatus.NO_PERMISSION;
-        }
-        //Let's presume the main plugin has a #joinChannel(Player, String) method
-        this.plugin.joinChannel((Player) sender, args[0]);
-        return CommandStatus.SUCCESS;
-    }
-```
-
-And there you have it! You now have a complete `SubCommand` (to which I've
-placed at the bottom of this section). All you need to do now is register your
-`SubCommand` when you make your `CommandHandler`:
-
-```java
-Plugin p = /* our main plugin instance */;
-CommandHandler channel = new CommandHandler(p, "channel", true);
-channel.register(new JoinCommand<>(p, channel)); //Can pass multiple new SubCommand objects
-```
-
-> But why did you return `CommandStatus#SUCCESS` when the channel didn't exist?
-
-The thing about `CommandStatus#SUCCESS` and `CommandStatus#FAILED` is that it
-has nothing to do with the actual context of the command itself. When you
-reached the point where your command recognized the channel didn't exist, and
-sent a message to the player in response to that, you successfully handled that
-situation. If you were to have a totally different situation, say doing file
-I/O:
-
-```java
-File f = /* some file */;
-try {
-    f.createNewFile();
-} catch (Exception ex) {
-    //The file can't be made, we have no way to recover from this exception :(
-    return CommandStatus.FAILED;
-}
-```
-
-Notice here that our problem isn't that the user provided bad input, but rather
-that our code ran into a problem while attempting to execute, and we no longer
-have a reasonable way to continue. This is almost exclusively the case with
-exceptions, but it may come up in other contexts.
-
-And lastly, here is our completed SubCommand!
-
-```java
-public class JoinCommand extends SubCommand<MyChannelPlugin> {
-
-    private final Set<String> channels = new HashSet<>(); //Our channels
-
-    public JoinCommand(MyChannelPlugin plugin, CommandHandler handler) {
-        super(plugin, handler);
-        this.channels.addAll(plugin.getChannelNames()); //Pretend method
-    }
-
-    @Override
-    public CommandStatus execute(CommandSender sender, String... args) {
-        if (!(sender instanceof Player)) {
-            return CommandStatus.PLAYER_ONLY; //Only players use channels
-        }
-        //The main command and the subcommand name are not included in our arguments array!
-        if (args.length < 1) { //Empty arguments
-            return CommandStatus.BAD_ARGS;
-        }
-        if (!this.channels.contains(args[0])) { //Make sure channel exists
-            sender.sendMessage("That channel does not exist!");
-            return CommandStatus.SUCCESS; //You thought I copy/pasted every line didn't you?
-        }
-        //At this point, we've confirmed the channel exists, and the sender is a player
-        if (!sender.hasPermission("myplugin.channels." + args[0])) {
-            //Hey! They can't join that channel!
-            return CommandStatus.NO_PERMISSION;
-        }
-        //Let's presume the main plugin has a #joinChannel(Player, String) method
-        this.plugin.joinChannel((Player) sender, args[0]);
-        return CommandStatus.SUCCESS;
-    }
-
-    @Override
-    public List<String> tabComplete(CommandSender sender, String... args) {
-        //From here, we need to return a list based on what has already been typed
-        //The main command and the subcommand name are not included in our arguments array!
-        if (args.length < 1) { //Empty arguments
-            //Return our available channels
-            return new ArrayList<>(this.channels);
-        } else if (args.length == 1) { //potentially auto-completing a word
-            //only return channels that start with the argument
-            return this.channels.stream().filter(c -> c.startsWith(args[0])).collect(Collectors.toList());
-        }
-        return new ArrayList<>(); //catch-all, we don't have anything to provide
-    }
-
-    @Override
-    public String getUsage() {
-        return super.getUsage() + " <channel>";
-    }
-
-    @Override
-    public String getName() {
-        return "join"; //This is the first argument for "channel", our subcommand's specific name
-    }
-
-    @Override
-    public Lang info() {
-        return Lang.createLang("Allows players to join a channel"); //We get to this later in the plugin file section!
-    }
-
-}
-```
-
-
-##<a name="plugin-file"></a> Plugin Files
-
-Plugin files are the foundation of building interfaces to be applied for
+Configuration files are the foundation of building interfaces to be applied for
 interacting with a flat-file format. As of the current release, there are two
 provided interfaces that use this, which are the [Config](#config)
 and [Lang](#lang) interfaces.
 
-Typically, the `PluginFile` interface should be applied to an enum, to allow for
+Typically, the `InfoFile` interface should be applied to an enum, to allow for
 specifying multiple file keys within a single class file. The interface is
 completely legal to apply to a class instead, however if it is applied to a
 class, then the class must implement the `Iterable` interface from Java 8 in
 order for `PluginFile#init(Class<T extends FileDataType>)` to work. The easiest
-way to think about it is that a `PluginFile` in reality specifies only a single
+way to think about it is that a `InfoFile` in reality specifies only a single
 value of a file, which is why a multi-instance class such as an enum helps to
 specify everything at once.
 
-Lastly, a `PluginFile` needs to have two class-level annotations: `PluginClass`
-and `RelativePath`. The `PluginClass` annotation simply needs a reference to
-your main class, and `RelativePath` specifies the name and location of the file
-that the implementing `PluginFile` uses.
+Lastly, a `InfoFile` needs to have one class-level annotation: `RelativePath`.
+The `RelativePath` specifies the name and location of the file that the
+implementing `InfoFile` uses.
 
-At the heart of an implementation for `PluginFile`, what you as a user will be
+At the heart of an implementation for `InfoFile`, what you as a user will be
 dealing with is something like this:
 
 ```java
-@PluginClass(MyPlugin.class) //Pass your main class
-@RelativePath("some-file.yml") //The location of your file in the plugin folder
-public enum MyPluginFile implements PluginFile {
+@RelativePath("some-file.yml") //The location of your file relative to the executing folder
+public enum MyConfigFile implements InfoFile {
 
     EXAMPLE_STRING("example.string", "Hello world!"),
     EXAMPLE_INT("example.int", 42),
@@ -360,42 +96,42 @@ public enum MyPluginFile implements PluginFile {
 }
 ```
 
-With this, you have defined the basic structure of all `PluginFile` objects.
-However, you rarely apply the `PluginFile` interface directly to an enum, as
+With this, you have defined the basic structure of all `InfoFile` objects.
+However, you rarely apply the `InfoFile` interface directly to an enum, as
 this does not carry much functionality at all. This is where the
-[Config](#config) and [Lang](#lang) interfaces that are provided come into play.
+[ConfigFile](#config) and [LangFile](#lang) interfaces that are provided come into play.
 
 ###<a name="config"></a> Configuration Files (Config)
 
-As you saw in the [PluginFile](#plugin-file) specifications, `PluginFile` can be
-extended into other interfaces to add functionality to the file. `Config` is one
+As you saw in the [InfoFile](#configuration) specifications, `InfoFile` can be
+extended into other interfaces to add functionality to the file. `ConfigFile` is one
 of these interfaces, and to specify an enum as a Config you merely have to
 change the class declaration from:
 
 ```java
-public enum MyPluginFile implements PluginFile {
+public enum MyPluginFile implements InfoFile {
 ```
 
 To:
 
 ```java
-public enum MyPluginFile implements Config {
+public enum MyPluginFile implements ConfigFile {
 ```
 
 And like magic, your plugin file now has all the methods it needs to be used as
 a config file. With this, some new methods are automatically added to your
 class:
 
-* `Config#as(Class<T>)`
+* `ConfigFile#as(Class<T>)`
 
-This is the main method that you will be dealing with when using the `Config`
-interface. If we look at our earlier example for `MyPluginFile`, we see that
-we're able to reference multiple `Config` values by specifying which enum
+This is the main method that you will be dealing with when using the `ConfigFile`
+interface. If we look at our earlier example for `MyConfigFile`, we see that
+we're able to reference multiple `ConfigFile` values by specifying which enum
 constant we want to use. So if we wanted to retrieve some values:
 
 ```java
-double answer = MyPluginFile.EXAMPLE_DOUBLE.as(double.class); //Retrieve a double
-String hello = MyPluginFile.EXAMPLE_STRING.as(String.class); //Retrieve a String
+double answer = MyConfigFile.EXAMPLE_DOUBLE.as(double.class); //Retrieve a double
+String hello = MyConfigFile.EXAMPLE_STRING.as(String.class); //Retrieve a String
 ```
 
 With this, we have added a fundamental separation of config management and
@@ -403,22 +139,22 @@ data retrieval. Config values usually need to be retrieved often and continually
 chaining up or down a reference chain to get from your current context to your
 plugin and back to a config manager turns into an unmanageable hassle.
 
-* `Config#get()` and `Config#set(Object)`
+* `ConfigFile#get()` and `ConfigFile#set(Object)`
 
 On a lower level, these methods are for directly interfacing with the underlying
-`FileDataType` for the `Config` being referred to. In general, you won't use
-`Config#get()` directly, as this returns a raw `Object` that requires casting
+`FileDataType` for the `ConfigFile` being referred to. In general, you won't use
+`ConfigFile#get()` directly, as this returns a raw `Object` that requires casting
 which can already be done through the `as` method (which has additional safety
-checks in place). As for `set(Object)`, it's fairly self-explanatory:
+checks in place). As for `#set(Object)`, it's fairly self-explanatory:
 
 ```java
 String example = "Mashed Potatoes";
-Config val = MyPluginFile.EXAMPLE_STRING;
+ConfigFile val = MyConfigFile.EXAMPLE_STRING;
 val.set(example);
 System.out.println(val.as(String.class)); //Prints "Mashed Potatoes"
 
 //Simplified
-MyPluginFile.EXAMPLE_STRING.set("Mashed Potatoes");
+MyConfigFile.EXAMPLE_STRING.set("Mashed Potatoes");
 ```
 
 Something to note is that information that is inserted via `#set(Object)`
@@ -430,63 +166,65 @@ you need to have an instance to refer to rather than a static call (this is
 a limitation of java):
 
 ```java
-MyPluginFile.EXAMPLE_STRING.save();
+MyConfigFile.EXAMPLE_STRING.save();
 ```
 
 While `EXAMPLE_STRING` was used, the entire file is actually saved in this call.
 
-* `Config#retrieve(FileDataType, Config)` and `Config#retrieve(FileDataType)`
+* `ConfigFile#retrieve(FileDataType, ConfigFile)` and `ConfigFile#retrieve(FileDataType)`
 
-Sometimes, a `Config` should actually relate to more than one file. For this,
-methods are provided to retrieve an anonymous/dynamic `Config` value which uses
-the passed data type with the paths and defaults of the relevant `Config` value
+Sometimes, a `ConfigFile` should actually relate to more than one file. For this,
+methods are provided to retrieve an anonymous/dynamic `ConfigFile` value which uses
+the passed data type with the paths and defaults of the relevant `ConfigFile` value
 that was already in use. What's nice about the abstraction with `FileDataType`
-here is that you are able to apply `Config` values across different types of
+here is that you are able to apply `ConfigFile` values across different types of
 files. For example:
 
 ```java
 Json json = /* a JSON file we need data from */;
 //Retrieve the EXAMPLE_STRING from the json file
-String val = MyPluginFile.EXAMPLE_STRING.retrieve(json).as(String.class);
+String val = MyConfigFile.EXAMPLE_STRING.retrieve(json).as(String.class);
 ```
 
-The `Config#retrieve(FileDataType)` actually just calls the static method
-`Config#retrieve(FileDataType, Config)` with the current config context, which
-returns an anonymous `Config` class containing the relevant information for
-`Config` to internally handle retrieving values. So in essence, the above
+The `ConfigFile#retrieve(FileDataType)` actually just calls the static method
+`ConfigFile#retrieve(FileDataType, Config)` with the current config context, which
+returns an anonymous `ConfigFile` class containing the relevant information for
+`ConfigFile` to internally handle retrieving values. So in essence, the above
 example can easily be written as:
 
 ```java
-String val = Config.retrieve(json, MyPluginFile.EXAMPLE_STRING).as(String.class);
+String val = ConfigFile.retrieve(json, MyConfigFile.EXAMPLE_STRING).as(String.class);
 ```
 
-This is useful for when you have a method which accepts a `Config` parameter and
+This is useful for when you have a method which accepts a `ConfigFile` parameter and
 don't wish to call upon the specific config value directly. This is a bit more
 advanced, and won't actually be applicable until Java 9 is released (due to
 type erasure being removed), but if you want to cast to the appropriate type,
-and can assume that the default supplied by the unknown `Config` value isn't
+and can assume that the default supplied by the unknown `ConfigFile` value isn't
 null, you can automatically retrieve the value like so:
 
 ```java
-public void doSomething(Config value) {
+public void doSomething(ConfigFile value) {
     //Because we don't know the type
     SomeObject val = value.as(value.getDefault().getClass());
 }
 ```
 
-At which point in time a `Config#cast()` method might be added, however this is
+At which point in time a `ConfigFile#cast()` method might be added, however this is
 much more into the realm of theory than actual implementations yet.
 
 ###<a name="lang"></a> Language Files (Lang)
 
-We've now seen both the `PluginFile` interface, as well as one of its extending
-interfaces (`Config`). However CodelanxLib provides a second interface that
-extends `PluginFile` specifically for the purpose of string externalization and
-`CommandSender` messaging. To implement, simply swap the `PluginFile` interface
-with the `Lang` interface, just like you did before with configs:
+#Edit: This section is a bit outdated and more tuned to CodelanxLib (with the `Lang` interface instead of `LangFile`). I stopped editing halfway through, contact me if you need a LangFile interface tutorial updated here. It's essentially the same idea but with a consistent Map<String, String> store for the file object.
+
+We've now seen both the `InfoFile` interface, as well as one of its extending
+interfaces (`ConfigFile`). However CodelanxLib provides a second interface that
+extends `InfoFile` specifically for the purpose of string externalization and
+user output. To implement, simply swap the `InfoFile` interface
+with the `LangFile` interface, just like you did before with configs:
 
 ```java
-public enum MyPluginFile implements Lang {
+public enum MyConfigFile implements LangFile {
 ```
 
 You now have a Lang enum, which adds some slightly different functionality to
@@ -496,9 +234,8 @@ be a string. In this specific scenario, I'm going to redefine some things from
 the previous `MyPluginFile` example:
 
 ```java
-@PluginClass(MyPlugin.class) //Pass your main class
-@RelativePath("some-file.yml") //The location of your file in the plugin folder
-public enum MyPluginFile implements Lang {
+@RelativePath("some-file.yml") //The relative location of your file
+public enum MyConfigFile implements LangFile {
 
     EXAMPLE_STRING("example.string", "Hello world!"),
     EXAMPLE_ARGS("example.with-args", "This is a %s"),
