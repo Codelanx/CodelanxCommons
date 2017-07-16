@@ -215,7 +215,7 @@ much more into the realm of theory than actual implementations yet.
 
 ### <a name="lang"></a>Language Files (Lang)
 
-#Edit: This section is a bit outdated and more tuned to CodelanxLib (with the `Lang` interface instead of `LangFile`). I stopped editing halfway through, contact me if you need a LangFile interface tutorial updated here. It's essentially the same idea but with a consistent Map<String, String> store for the file object.
+#### Edit: This section is a bit outdated and more tuned to CodelanxLib (with the `Lang` interface instead of `LangFile`). I stopped editing halfway through, contact me if you need a LangFile interface tutorial updated here. It's essentially the same idea but with a consistent Map<String, String> store for the file object.
 
 We've now seen both the `InfoFile` interface, as well as one of its extending
 interfaces (`ConfigFile`). However CodelanxLib provides a second interface that
