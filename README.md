@@ -34,7 +34,7 @@ Library for Codelanx Java projects. Public use is allowed, but must be credited.
   * __[Legal](#legal)__
 
 
-##<a name="configuration"></a> Configuration
+## Configuration <a name="configuration"></a>
 
 Configuration files are the foundation of building interfaces to be applied for
 interacting with a flat-file format. As of the current release, there are two
@@ -101,7 +101,7 @@ However, you rarely apply the `InfoFile` interface directly to an enum, as
 this does not carry much functionality at all. This is where the
 [ConfigFile](#config) and [LangFile](#lang) interfaces that are provided come into play.
 
-###<a name="config"></a> Configuration Files (Config)
+### <a name="config"></a>Configuration Files (Config)
 
 As you saw in the [InfoFile](#configuration) specifications, `InfoFile` can be
 extended into other interfaces to add functionality to the file. `ConfigFile` is one
@@ -213,7 +213,7 @@ public void doSomething(ConfigFile value) {
 At which point in time a `ConfigFile#cast()` method might be added, however this is
 much more into the realm of theory than actual implementations yet.
 
-###<a name="lang"></a> Language Files (Lang)
+### <a name="lang"></a>Language Files (Lang)
 
 #Edit: This section is a bit outdated and more tuned to CodelanxLib (with the `Lang` interface instead of `LangFile`). I stopped editing halfway through, contact me if you need a LangFile interface tutorial updated here. It's essentially the same idea but with a consistent Map<String, String> store for the file object.
 
@@ -390,9 +390,9 @@ public Lang getFormat() {
 }
 ```
 
-##<a name="outline"></a> Outline
+## <a name="outline"></a>Outline
 
-###<a name="legal"></a> Legal
+### <a name="legal"></a>Legal
 
 Code copyright is a giant headache, which most people don't want to even think
 about (I sure don't). So, to make things simple, here's a brief summary of what
