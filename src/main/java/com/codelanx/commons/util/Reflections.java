@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -429,6 +430,29 @@ public final class Reflections {
             name = "[L" + componentType.getName() + ";";
         }
         return classLoader != null ? classLoader.loadClass(name) : Class.forName(name);
+    }
+    
+    //guaranteed safety, so no class cast if wrong (just converts)
+    //CCE occurs for bad Class<T> parameter
+    public static <T extends Number> T convertNumber(Number in, Class<T> out) {
+        if (Primitives.isWrapperType(out)) {
+            out = Primitives.unwrap(out);
+        }
+        if (out == int.class) {
+            return (T) (Number) in.intValue();
+        } else if (out == byte.class) {
+            return (T) (Number) in.byteValue();
+        } else if (out == short.class) {
+            return (T) (Number) in.shortValue();
+        } else if (out == long.class) {
+            return (T) (Number) in.longValue();
+        } else if (out == float.class) {
+            return (T) (Number) in.floatValue();
+        } else if (out == double.class) {
+            return (T) (Number) in.doubleValue();
+        } else {
+            return (T) in; //CCE
+        }
     }
 
     public static Optional<Integer> parseInt(String s) {
