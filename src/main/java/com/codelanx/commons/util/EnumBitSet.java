@@ -21,7 +21,6 @@ package com.codelanx.commons.util;
 
 import com.codelanx.commons.util.exception.Exceptions;
 
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
