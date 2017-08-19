@@ -20,6 +20,8 @@
 package com.codelanx.commons.util;
 
 import com.codelanx.commons.util.exception.Exceptions;
+
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,7 +37,7 @@ import java.util.Set;
  * 
  * @param <E> The type of the enum this {@link EnumBitSet} applies to
  */
-public class EnumBitSet<E extends Enum> { //Purposefully raw-typed
+public class EnumBitSet<E extends Enum<E>> {
 
     private long level;
 
@@ -157,10 +159,11 @@ public class EnumBitSet<E extends Enum> { //Purposefully raw-typed
         E[] cn = clazz.getEnumConstants();
         Exceptions.illegalState(cn.length <= 64, "Cannot support enums with over 64 constants!");
         Set<E> temp = new HashSet<>();
-        for (E e : cn) {
-            if (this.has(e)) {
-                temp.add(e);
-            } 
+        long itr = this.level;
+        for (int i = 0; i < cn.length; i++, itr >>= 1) {
+            if ((itr & 0b1) == 1) {
+                temp.add(cn[i]);
+            }
         }
         return temp.isEmpty() ? temp : EnumSet.copyOf(temp);
     }
