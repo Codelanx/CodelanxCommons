@@ -62,7 +62,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 //TODO: Thread safety for non-initial files, thread safety on indexes, incremental saving
 public abstract class FileDataType implements DataType {
 
-    protected static final boolean DEBUG_SERIALIZATION = false; //if true, will serialize on all #set calls
+    protected static final boolean DEBUG_SERIALIZATION = true; //if true, will serialize on all #set calls
     protected static final String NEWLINE = System.getProperty("line.separator");
     private static final ExecutorService SAVER = Executors.newSingleThreadScheduledExecutor();
 
@@ -149,6 +149,10 @@ public abstract class FileDataType implements DataType {
 
     public ConfigFile getMutable(String path, Object def) {
         return ConfigFile.anonMutator(path, def, this);
+    }
+
+    public ConfigFile mutable() {
+        return this.getMutable("", null);
     }
 
     /**
@@ -466,6 +470,10 @@ public abstract class FileDataType implements DataType {
     //not thread safe, wrap calls with proper index locks
     private Map<String, Object> traverse(boolean makePath, String... ladder) {
         Map<String, Object> container = this.getRoot();
+        if (ladder.length == 1 && ladder[0].isEmpty()) {
+            //return root
+            return container;
+        }
         Exceptions.illegalState(container != null, "File failed to load, aborting operation");
         for (int i = 0; i < ladder.length - 1; i++) {
             if (!container.containsKey(ladder[i]) && makePath) {

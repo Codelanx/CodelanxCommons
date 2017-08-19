@@ -70,8 +70,6 @@ public final class RNG {
      * 
      * @since 0.1.0
      * @version 0.1.0
-     * 
-     * @return The {@link ThreadLocalRandom} for the current thread context
      */
     public static final ThreadLocalRandomWrapper THREAD_LOCAL = ThreadLocalRandom::current;
     
