@@ -20,8 +20,12 @@
 package com.codelanx.commons.config;
 
 import com.codelanx.commons.data.FileDataType;
+import com.codelanx.commons.data.FileSerializable;
 import com.codelanx.commons.util.Reflections;
 import com.google.common.primitives.Primitives;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 import org.apache.commons.lang3.Validate;
@@ -70,6 +74,21 @@ public interface ConfigFile extends InfoFile {
         }
         if (o == null) {
             return null;
+        }
+        if (o instanceof Map && c.isAssignableFrom(FileSerializable.class)) {
+            Map<String, Object> map = (Map<String, Object>) o;
+            Class<?> type = map.getClass();
+            try {
+                //TODO: no raw reflection here
+                Constructor<T> obj = c.getConstructor(type);
+                obj.setAccessible(true);
+                return obj.newInstance(map);
+            } catch (NoSuchMethodException
+                    | InstantiationException
+                    | IllegalAccessException
+                    | InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
         if (c == String.class) {
             return (T) String.valueOf(o);

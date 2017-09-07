@@ -4,6 +4,8 @@ import com.codelanx.commons.data.FileDataType;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -17,51 +19,50 @@ public class XML extends FileDataType {
     }
 
     public XML() {
-        this(null);
+        super((File) null);
+    }
+
+    public XML(String data) {
+        super(data);
     }
 
     @Override
-    public void save() throws IOException {
-
-    }
-
-    @Override
-    public void save(File target) throws IOException {
-
-    }
-
-    @Override
-    protected Map<String, Object> readRaw(File target) throws IOException {
+    public Object parse(Reader reader) throws IOException {
         return null;
     }
 
     @Override
-    public Object serializeMap(Map<String, Object> toFileFormat) {
+    public Object parse(String in) {
         return null;
     }
 
     @Override
-    public Object serializeArray(Object array) {
+    protected Object serializeMap(Map<String, Object> toFileFormat) {
         return null;
     }
 
     @Override
-    public Object deserializeArray(Object array) {
+    protected Object serializeArray(Object array) {
         return null;
     }
 
     @Override
-    protected Map<String, Object> newSection() {
+    protected Object deserializeArray(Object array) {
         return null;
     }
 
     @Override
-    public Map<String, Object> getRoot() {
+    protected Map<String, Object> newMapping() {
         return null;
     }
 
     @Override
-    protected String toString(Map<String, Object> section) {
+    protected Collection<Object> newSeries() {
+        return null;
+    }
+
+    @Override
+    protected String toString(Object section) {
         return null;
     }
 }

@@ -5,13 +5,15 @@ import com.codelanx.commons.util.Reflections;
 import org.json.simple.JSONObject;
 import org.yaml.snakeyaml.DumperOptions;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,16 +37,21 @@ public class Yaml extends FileDataType {
     }
 
     public Yaml() {
-        super(null);
+        super((File) null);
+    }
+
+    public Yaml(String data) {
+        super(data);
     }
 
     @Override
-    protected Map<String, Object> readRaw(File target) throws IOException {
-        Object o = CRYPTEX.get().load(Files.newBufferedReader(target.toPath()));
-        if (o == null) {
-            return this.newSection();
-        }
-        return (Map<String, Object>) o;
+    public Object parse(String in) {
+        return CRYPTEX.get().load(in);
+    }
+
+    @Override
+    public Object parse(Reader reader) throws IOException {
+        return CRYPTEX.get().load(reader);
     }
 
     @Override
@@ -77,33 +84,48 @@ public class Yaml extends FileDataType {
     }
 
     @Override
-    protected Map<String, Object> newSection() {
-        return new HashMap<>();
+    protected Map<String, Object> newMapping() {
+        return new LinkedHashMap<>();
     }
 
     @Override
-    protected String toString(Map<String, Object> section) {
+    protected Collection<Object> newSeries() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    protected String toString(Object section) {
         return CRYPTEX.get().dump(this.replaceUnserializables(section));
     }
 
-    @Override
-    public String toString() {
-        return this.toString(this.getRoot());
+    private Object replaceUnserializables(Object in) {
+        if (in instanceof Map) {
+            Map<String, Object> base = (Map<String, Object>) in;
+            Map<String, Object> back = new HashMap<>();
+            back.putAll(base);
+            back.replaceAll((k, v) -> {
+                return this.unserializeMapping(v);
+            });
+            return back;
+        } else if (in instanceof Collection) {
+            Collection<Object> base = (Collection<Object>) in;
+            List<Object> back = new ArrayList<>();
+            back.addAll(base);
+            back.replaceAll(this::unserializeMapping);
+            return back;
+        } else {
+            throw new IllegalArgumentException("Cannot have a literal as the root value");
+        }
     }
 
-    private Map<String, Object> replaceUnserializables(Map<String, Object> in) {
-        Map<String, Object> back = new HashMap<>();
-        back.putAll(in);
-        back.replaceAll((k, v) -> {
-            if (v instanceof Map
-                    || v.getClass().isArray()
-                    || v instanceof List
-                    || v == null) {
-                return v;
-            } else {
-                return Reflections.objectString(v);
-            }
-        });
-        return back;
+    private Object unserializeMapping(Object v) {
+        if (v instanceof Map
+                || v.getClass().isArray()
+                || v instanceof List
+                || v == null) {
+            return v;
+        } else {
+            return Reflections.objectString(v);
+        }
     }
 }

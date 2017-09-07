@@ -23,8 +23,10 @@ import com.codelanx.commons.data.FileDataType;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,24 +76,34 @@ public class Json extends FileDataType {
     }
 
     public Json() {
-        super(null);
+        super((File) null);
+    }
+
+    public Json(String data) {
+        super(data);
     }
 
     @Override
-    protected Map<String, Object> readRaw(File target) throws IOException {
-        if (FileUtils.readFileToString(target).trim().isEmpty()) {
-            return this.newSection();
-        }
+    public Object parse(Reader reader) throws IOException {
         try {
-            return (Map<String, Object>) JSON_PARSER.get().parse(new FileReader(target), ORDERED);
+            return JSON_PARSER.get().parse(reader, ORDERED);
         } catch (ParseException e) {
             throw new IOException(e);
         }
     }
 
     @Override
+    public Object parse(String in) {
+        try {
+            return JSON_PARSER.get().parse(in);
+        } catch (ParseException e) {
+            throw new RuntimeException("Failed to parse input: '" + (in.length() > 32 ? in.substring(0, 32) + "..." : in), e);
+        }
+    }
+
+    @Override
     public Map<String, Object> serializeMap(Map<String, Object> toFileFormat) {
-        Map<String, Object> obj = this.newSection();
+        Map<String, Object> obj = this.newMapping();
         toFileFormat.forEach((k, v) -> {
             obj.put(k, this.parseSerializable(v));
         });
@@ -124,13 +136,13 @@ public class Json extends FileDataType {
     }
 
     @Override
-    protected Map<String, Object> newSection() {
+    protected Map<String, Object> newMapping() {
         return ORDERED.createObjectContainer();
     }
 
     @Override
-    public String toString() {
-        return this.toString(this.getRoot());
+    protected Collection<Object> newSeries() {
+        return ORDERED.creatArrayContainer();
     }
 
     public static String format(String json) {
@@ -197,7 +209,7 @@ public class Json extends FileDataType {
     }
 
     @Override
-    protected String toString(Map<String, Object> section) {
+    protected String toString(Object section) {
         if (section instanceof JSONObject) {
             return Json.format(((JSONObject) section).toJSONString());
         } else {

@@ -27,19 +27,24 @@ import com.codelanx.commons.logging.Debugger;
 import com.codelanx.commons.logging.Logging;
 import com.codelanx.commons.util.Reflections;
 import com.codelanx.commons.util.exception.Exceptions;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.Validate;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -71,21 +76,32 @@ public abstract class FileDataType implements DataType {
     //protected final IndexLock indexes = new IndexLock();
     /** The {@link File} location of this {@link FileDataType} */
     protected final File location;
-    private final Map<String, Object> root;
+    private final Object root; //can be a list or map, but what about null for empty data?
 
     protected FileDataType(File location) {
         this.location = location;
-        Map<String, Object> root = null; //left as null for integrity safety (fails and won't overwrite a file to empty)
+        Object root = null; //left as null for integrity safety (fails and won't overwrite a file to empty)
         try {
             if (this.location == null) {
-                root = this.newSection();
+                root = this.newMapping();
             } else {
                 root = this.readRaw();
             }
         } catch (IOException ex) {
             Debugger.error(ex, "Error loading %s file '%s'", this.getClass().getSimpleName(), location.getPath());
         }
-        this.root = (Map<String, Object>) this.deserializeMap(root);
+        if (root instanceof Map) {
+            this.root = this.deserializeMap((Map<String, Object>) root);
+        } else if (root instanceof Collection) {
+            this.root = this.deserializeArray(root);
+        } else {
+            throw new IllegalArgumentException("Cannot have a literal as the root value");
+        }
+    }
+
+    protected FileDataType(String data) {
+        this.location = null;
+        this.root = this.parse(data);
     }
 
     /**
@@ -98,6 +114,9 @@ public abstract class FileDataType implements DataType {
      * @param value The value to set
      */
     public void set(String path, Object value) {
+        if (this.isSeries()) {
+            throw new UnsupportedOperationException("Cannot set mapping values on a series");
+        }
         String[] ladder = FileDataType.getLadder(path);
         //Reflections.operateLock(this.lock.readLock(), () -> {
             Map<String, Object> data = this.traverse(true, ladder);
@@ -112,6 +131,15 @@ public abstract class FileDataType implements DataType {
         //});
     }
 
+    public void setSeries(Collection<Object> value) {
+        if (!this.isSeries()) {
+            throw new UnsupportedOperationException("Cannot set a series value on a mapping");
+        }
+        Collection<Object> all = (Collection<Object>) this.root;
+        all.clear();
+        all.addAll(value);
+    }
+
     /**
      * Returns whether or not there is an object located at the specified path
      *
@@ -122,6 +150,9 @@ public abstract class FileDataType implements DataType {
      * @return {@code true} if a value is found, {@code false} otherwise
      */
     public boolean isSet(String path) {
+        if (this.isSeries()) {
+            throw new UnsupportedOperationException("Cannot set mapping values on a series");
+        }
         String[] ladder = FileDataType.getLadder(path);
         //return Reflections.operateLock(this.lock.readLock(), () -> {
             Map<String, Object> data = this.getContainer(ladder);
@@ -167,6 +198,9 @@ public abstract class FileDataType implements DataType {
      * @return The relevant object, or the default if no value is found
      */
     public Object get(String path, Object def) {
+        if (this.isSeries()) {
+            throw new UnsupportedOperationException("Cannot retrieve key values from a series");
+        }
         if (!this.isSet(path)) {
             return def;
         }
@@ -177,6 +211,10 @@ public abstract class FileDataType implements DataType {
             Object back = data.get(ladder[ladder.length - 1]);
         //});
         return this.parseDeserializable(back);
+    }
+
+    public boolean isSeries() {
+        return this.root instanceof Collection;
     }
 
     /**
@@ -227,9 +265,14 @@ public abstract class FileDataType implements DataType {
         }
     }
 
+    @Override
+    public String toString() {
+        return this.toString(this.getRoot());
+    }
+
     private void writeRaw(File target) {
         System.out.println("getting copy");
-        Map<String, Object> out = this.serializationCopy(); //for now this is outside so a deadlock won't wipe a file
+        Object out = this.serializationCopy(); //for now this is outside so a deadlock won't wipe a file
         System.out.println("writing to file");
         try (FileWriter fw = new FileWriter(target)) {
             System.out.println("new: " + out);
@@ -259,7 +302,8 @@ public abstract class FileDataType implements DataType {
                 }
                 return;
             }
-            Map<String, Object> read = this.readRaw(target);
+            //this will probably throw a CCE with the wrong file, but this method shouldn't be invoked anyhow
+            Map<String, Object> read = (Map<String, Object>) this.readRaw(target);
             Map<String, Object> toSet = Reflections.difference(read, out);
             StringBuilder output = new StringBuilder();
             int level = 0;
@@ -294,9 +338,26 @@ public abstract class FileDataType implements DataType {
      */
     public static <T extends FileDataType> T newInstance(Class<T> clazz, File location) {
         try {
-            Constructor r = clazz.getConstructor(File.class);
+            Constructor<T> r = clazz.getDeclaredConstructor(File.class);
             r.setAccessible(true);
-            return (T) r.newInstance(location);
+            return r.newInstance(location);
+        } catch (NoSuchMethodException ex) {
+            Logging.simple().error(ex, "No File constructor found in FileDataType '%s'", clazz.getName());
+        } catch (SecurityException
+                | InstantiationException
+                | IllegalAccessException
+                | IllegalArgumentException
+                | InvocationTargetException ex) {
+            Debugger.error(ex, "Error parsing data file");
+        }
+        return null;
+    }
+
+    public static <T extends FileDataType> T newInstance(Class<T> clazz, String data) {
+        try {
+            Constructor<T> r = clazz.getDeclaredConstructor(String.class);
+            r.setAccessible(true);
+            return r.newInstance(data);
         } catch (NoSuchMethodException ex) {
             Logging.simple().error(ex, "No File constructor found in FileDataType '%s'", clazz.getName());
         } catch (SecurityException
@@ -339,18 +400,34 @@ public abstract class FileDataType implements DataType {
         return o;
     }
 
-    final Map<String, Object> serializationCopy() {
+    public abstract Object parse(Reader reader) throws IOException;
+
+    public abstract Object parse(String in);
+
+    final Object serializationCopy() {
         //System.out.println("lock#write: " + this.lock.writeLock().tryLock());
         return this.serializationCopy(this.getRoot());//Reflections.operateLock(this.lock.writeLock(), () -> this.serializationCopy(this.getRoot()));
     }
 
-    protected final Map<String, Object> serializationCopy(Map<String, Object> original) {
+    protected final Object serializationCopy(Object original) {
         System.out.println("Starting serialization copy");
-        Map<String, Object> back = this.newSection();
-        back.putAll(original);
-        back.replaceAll((k, v) -> this.parseSerializable(v));
-        System.out.println("returning: " + back);
-        return back;
+        if (original instanceof Map) {
+            Map<String, Object> back = this.newMapping();
+            back.putAll((Map<String, Object>) original);
+            back.replaceAll((k, v) -> this.parseSerializable(v));
+            System.out.println("returning: " + back);
+            return back;
+        } else if (original instanceof Collection) {
+            Collection<Object> orig = (Collection<Object>) original;
+            List<Object> back = new ArrayList<>(orig.size());
+            back.addAll(orig);
+            back.replaceAll(this::parseSerializable);
+            orig = this.newSeries();
+            orig.addAll(back);
+            return orig;
+        } else {
+            throw new IllegalArgumentException("Cannot copy a literal value");
+        }
     }
 
     protected final Object deserializeMap(Map<String, Object> data) {
@@ -390,7 +467,7 @@ public abstract class FileDataType implements DataType {
      *         empty or a reader returns null.
      * @throws IOException If the file could not be read
      */
-    protected Map<String, Object> readRaw() throws IOException {
+    protected Object readRaw() throws IOException {
         this.fileLock.readLock().lock();
         try {
             return this.readRaw(this.location);
@@ -409,7 +486,13 @@ public abstract class FileDataType implements DataType {
      *         file is empty or a reader returns null.
      * @throws IOException If the file could not be read
      */
-    protected abstract Map<String, Object> readRaw(File target) throws IOException;
+    protected Object readRaw(File target) throws IOException {
+        if (FileUtils.readFileToString(target).trim().isEmpty()) {
+            return this.newMapping();
+        }
+        Object o = this.parse(Files.newBufferedReader(target.toPath()));
+        return o == null ? this.newMapping() : o;
+    }
 
     protected abstract Object serializeMap(Map<String, Object> toFileFormat);
 
@@ -417,7 +500,9 @@ public abstract class FileDataType implements DataType {
 
     protected abstract Object deserializeArray(Object array);
 
-    protected abstract Map<String, Object> newSection();
+    protected abstract Map<String, Object> newMapping();
+
+    protected abstract Collection<Object> newSeries();
 
     /**
      * Returns a {@link Class} value representative of a {@link FileDataType},
@@ -469,7 +554,10 @@ public abstract class FileDataType implements DataType {
      */
     //not thread safe, wrap calls with proper index locks
     private Map<String, Object> traverse(boolean makePath, String... ladder) {
-        Map<String, Object> container = this.getRoot();
+        if (this.isSeries()) {
+            throw new UnsupportedOperationException("Cannot traverse mapping values in a series");
+        }
+        Map<String, Object> container = (Map<String, Object>) this.getRoot();
         if (ladder.length == 1 && ladder[0].isEmpty()) {
             //return root
             return container;
@@ -477,7 +565,7 @@ public abstract class FileDataType implements DataType {
         Exceptions.illegalState(container != null, "File failed to load, aborting operation");
         for (int i = 0; i < ladder.length - 1; i++) {
             if (!container.containsKey(ladder[i]) && makePath) {
-                container.put(ladder[i], this.newSection());
+                container.put(ladder[i], this.newMapping());
             }
             Map<String, Object> temp = (Map<String, Object>) container.get(ladder[i]);
             if (temp == null) {
@@ -514,11 +602,11 @@ public abstract class FileDataType implements DataType {
      *
      * @return The root {@link Map} that represents this {@link FileDataType}
      */
-    public Map<String, Object> getRoot() {
+    public Object getRoot() {
         return this.root;
     }
 
-    protected abstract String toString(Map<String, Object> section);
+    protected abstract String toString(Object section);
 
     //TODO: make this work
     private static class IndexLock {
