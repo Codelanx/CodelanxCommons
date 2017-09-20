@@ -27,7 +27,12 @@ import com.google.common.primitives.Primitives;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.commons.lang3.Validate;
 
 /**
@@ -124,8 +129,52 @@ public interface ConfigFile extends InfoFile {
      *         then {@link Object#toString()} is called on the value instead
      */
     @SuppressWarnings("rawtypes")
-    default public <G, T extends Collection<G>> T as(Class<? extends Collection> collection, Class<G> type) {
-        Collection<G> col = this.as(collection);
+    //TODO: FileSerializable null edge cases
+    default public <G, T extends Collection<G>> T as(Class<T> collection, Class<G> type) {
+        Collection<?> col = this.as(collection);
+        if (type.isAssignableFrom(FileSerializable.class)) {
+            //do a conversion
+            Object nonMatch = col.stream().filter(o -> !(o instanceof Map) || !type.isAssignableFrom(o.getClass())).findAny().orElse(null);
+            if (nonMatch != null) {
+                throw new IllegalArgumentException("Cannot deserialize non-map object: " + nonMatch);
+            }
+            try {
+                //TODO: no raw reflection here
+                T back = collection.newInstance();
+                Constructor<G> obj = type.getConstructor(Map.class);
+                obj.setAccessible(true);
+                AtomicBoolean broken = new AtomicBoolean();
+                col.stream().filter(o -> broken.compareAndSet(false, o != null && !(o instanceof Map) && !type.isAssignableFrom(o.getClass()))).forEach(o -> {
+                    if (broken.get()) {
+                        return;
+                    }
+                    if (o == null) {
+                        back.add(null);
+                        return;
+                    }
+                    if (type.isAssignableFrom(o.getClass())) {
+                        back.add((G) o);
+                        return;
+                    }
+                    try {
+                        G val = obj.newInstance(o);
+                        back.add(val);
+                    } catch (InstantiationException
+                            | IllegalAccessException
+                            | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                });
+                if (back.size() != col.size()) { //TODO: Maybe not calculate to end? soft-fuse atm on that boolean
+                    throw new IllegalStateException("Mismatched serialization of collection");
+                }
+                return back;
+            } catch (NoSuchMethodException
+                    | InstantiationException
+                    | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
         for (Object o : col) {
             if (!type.isInstance(o)) {
                 throw new ClassCastException("Inappropriate generic type for collection (Found: " + o.getClass().toString() + ", Attempted: " + type.toString() + ")");
@@ -158,8 +207,63 @@ public interface ConfigFile extends InfoFile {
      *         then {@link Object#toString()} is called on the value instead
      */
     @SuppressWarnings("rawtypes")
-    default public <K, V, M extends Map<K, V>> M as(Class<? extends Map> map, Class<K> key, Class<V> value) {
+    default public <K, V, M extends Map<K, V>> M as(Class<M> map, Class<K> key, Class<V> value) {
         Map<?, ?> m = this.as(map);
+        if (value.isAssignableFrom(FileSerializable.class)) {
+            //precheck
+            Object nonKey = m.keySet().stream().filter(k -> k != null && !key.isAssignableFrom(k.getClass())).findAny().orElse(null);
+            if (nonKey != null) {
+                throw new IllegalArgumentException("Mismatched key type. Expected: " + key.getName() + ", found: " + nonKey.getClass().getName());
+            }
+            Object nonMatch = m.entrySet().stream()
+                    .filter(o -> o.getValue() != null && !(o.getValue() instanceof Map) && !value.isAssignableFrom(o.getValue().getClass()))
+                    .findAny().map(Entry::getValue).orElse(null);
+            if (nonMatch != null) {
+                throw new IllegalArgumentException("Cannot deserialize non-map object: " + nonMatch);
+            }
+            //do a conversion
+            try {
+                //TODO: no raw reflection here
+                if (map.isAssignableFrom(Map.class)) {
+                    map = (Class<M>) (Class<?>) LinkedHashMap.class;
+                }
+                M back = map.newInstance();
+                Constructor<V> obj = value.getConstructor(Map.class);
+                obj.setAccessible(true);
+                AtomicBoolean broken = new AtomicBoolean();
+                m.entrySet().stream()
+                        .filter(ent -> broken.compareAndSet(false, ent.getValue() != null && !(ent.getValue() instanceof Map) && !value.isAssignableFrom(ent.getValue().getClass())))
+                        .map(ent -> {
+                            if (broken.get()) {
+                                return null;
+                            }
+                            if (ent.getValue() == null || value.isAssignableFrom(ent.getValue().getClass())) {
+                                back.put((K) ent.getKey(), (V) ent.getValue());
+                                return ent.getValue();
+                            }
+                            Map<?, ?> o = (Map<?, ?>) ent.getValue();
+                            try {
+                                V vo = obj.newInstance(o);
+                                back.put((K) ent.getKey(), vo);
+                                return vo;
+                            } catch (InstantiationException
+                                    | IllegalAccessException
+                                    | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                            return null;
+                        })
+                        .filter(o -> broken.compareAndSet(false, o == null)).count();
+                if (back.size() != m.size()) { //TODO: Maybe not calculate to end? soft-fuse atm on that boolean
+                    throw new IllegalStateException("Mismatched serialization of collection");
+                }
+                return back;
+            } catch (NoSuchMethodException
+                    | InstantiationException
+                    | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
         for (Map.Entry<?, ?> ent : m.entrySet()) {
             if (!key.isInstance(ent.getKey()) || !value.isInstance(ent.getValue())) {
                 throw new ClassCastException("Inappropriate generic types for map");

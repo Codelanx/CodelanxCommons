@@ -60,9 +60,13 @@ public final class Logging {
      */
     public static void setNicerFormat() {
         //See: https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html
-        Logging.setGlobalFormat("[%1$tH:%1$tM:%1$tS] %4$s: %5$s%n");
+        setAndUpdateFormat("[%1$tH:%1$tM:%1$tS] %4$s: %5$s%n", Logging.getHandlers());
+    }
+
+    public static void setAndUpdateFormat(String format, Handler... handlers) {
+        Logging.setGlobalFormat(format);
         Formatter f = new SimpleFormatter();
-        Arrays.stream(Logging.getHandlers()).forEach(h -> h.setFormatter(f));
+        Arrays.stream(handlers).forEach(h -> h.setFormatter(f));
     }
 
     /**
