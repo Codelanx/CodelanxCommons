@@ -29,8 +29,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.Validate;
@@ -80,7 +82,7 @@ public interface ConfigFile extends InfoFile {
         if (o == null) {
             return null;
         }
-        if (o instanceof Map && c.isAssignableFrom(FileSerializable.class)) {
+        if (o instanceof Map && FileSerializable.class.isAssignableFrom(c)) {
             Map<String, Object> map = (Map<String, Object>) o;
             Class<?> type = map.getClass();
             try {
@@ -132,7 +134,7 @@ public interface ConfigFile extends InfoFile {
     //TODO: FileSerializable null edge cases
     default public <G, T extends Collection<G>> T as(Class<T> collection, Class<G> type) {
         Collection<?> col = this.as(collection);
-        if (type.isAssignableFrom(FileSerializable.class)) {
+        if (FileSerializable.class.isAssignableFrom(type)) {
             //do a conversion
             Object nonMatch = col.stream().filter(o -> !(o instanceof Map) || !type.isAssignableFrom(o.getClass())).findAny().orElse(null);
             if (nonMatch != null) {
@@ -209,7 +211,7 @@ public interface ConfigFile extends InfoFile {
     @SuppressWarnings("rawtypes")
     default public <K, V, M extends Map<K, V>> M as(Class<M> map, Class<K> key, Class<V> value) {
         Map<?, ?> m = this.as(map);
-        if (value.isAssignableFrom(FileSerializable.class)) {
+        if (FileSerializable.class.isAssignableFrom(value)) {
             //precheck
             Object nonKey = m.keySet().stream().filter(k -> k != null && !key.isAssignableFrom(k.getClass())).findAny().orElse(null);
             if (nonKey != null) {
@@ -224,8 +226,8 @@ public interface ConfigFile extends InfoFile {
             //do a conversion
             try {
                 //TODO: no raw reflection here
-                if (map.isAssignableFrom(Map.class)) {
-                    map = (Class<M>) (Class<?>) LinkedHashMap.class;
+                if (Map.class.equals(map)) {
+                    map = (Class<M>) LinkedHashMap.class;
                 }
                 M back = map.newInstance();
                 Constructor<V> obj = value.getConstructor(Map.class);
