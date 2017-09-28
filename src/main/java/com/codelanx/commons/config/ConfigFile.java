@@ -227,7 +227,7 @@ public interface ConfigFile extends InfoFile {
             try {
                 //TODO: no raw reflection here
                 if (Map.class.equals(map)) {
-                    map = (Class<M>) LinkedHashMap.class;
+                    map = (Class<M>) (Class<?>) LinkedHashMap.class;
                 }
                 M back = map.newInstance();
                 Constructor<V> obj = value.getConstructor(Map.class);
