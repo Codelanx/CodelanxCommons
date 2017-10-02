@@ -19,27 +19,14 @@
  */
 package com.codelanx.commons.util;
 
-import com.codelanx.commons.logging.Debugger;
 import com.codelanx.commons.logging.Logging;
-import com.codelanx.commons.util.exception.Exceptions;
 import com.google.common.primitives.Primitives;
 import org.apache.commons.lang3.Validate;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,18 +35,13 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 /**
  * Represents utility functions that utilize either java's reflection api,
  * analysis of the current Stack in use, low-level operations, primitives, or
- * other methods that deal with operations outside the norm of Java or Bukkit's
- * own system
+ * other methods that deal with operations outside the normal (read: non-reflecting)
+ * Java usage.
  *
  * @since 0.1.0
  * @author 1Rogue
@@ -76,7 +58,7 @@ public final class Reflections {
      *
      * @since 0.1.0
      * @version 0.1.0
-     * 
+     *
      * @param target The relevant element to check for an {@link Annotation}
      * @param check  The {@link Annotation} class type to check for
      * @return {@code true} if the {@link Annotation} is present
@@ -119,10 +101,10 @@ public final class Reflections {
     /**
      * Returns a {@link StackTraceElement} of the direct caller of the current
      * method's context.
-     * 
+     *
      * @since 0.1.0
      * @version 0.1.0
-     * 
+     *
      * @param offset The number of additional methods to look back
      * @return A {@link StackTraceElement} representing where the current
      *         context was called from
@@ -141,72 +123,15 @@ public final class Reflections {
      * Returns a {@link StackTraceElement} of the direct caller of the current
      * method's context. This method is equivalent to calling
      * {@code Reflections.getCaller(0)}
-     * 
+     *
      * @since 0.1.0
      * @version 0.1.0
-     * 
+     *
      * @return A {@link StackTraceElement} representing where the current
      *         context was called from
      */
     public static StackTraceElement getCaller() {
         return Reflections.getCaller(1);
-    }
-
-    /**
-     * Checks whether or not there is a plugin on the server with the name of
-     * the passed {@code name} paramater. This method achieves this by scanning
-     * the plugins folder and reading the {@code plugin.yml} files of any
-     * respective jarfiles in the directory.
-     * 
-     * @since 0.1.0
-     * @version 0.2.0
-     * 
-     * @param name The name of the plugin as specified in the {@code plugin.yml}
-     * @return The {@link File} for the plugin jarfile, or {@code null} if not
-     *         found
-     */
-    public static File findPluginJarfile(String name) {
-        File plugins = new File("plugins");
-        Exceptions.illegalState(plugins.isDirectory(), "'plugins' isn't a directory! (wat)");
-        for (File f : plugins.listFiles((File pathname) -> {
-            return pathname.getPath().endsWith(".jar");
-        })) {
-            try (InputStream is = new FileInputStream(f); ZipInputStream zi = new ZipInputStream(is)) {
-                ZipEntry ent = null;
-                while ((ent = zi.getNextEntry()) != null) {
-                    if (ent.getName().equalsIgnoreCase("plugin.yml")) {
-                        break;
-                    }
-                }
-                if (ent == null) {
-                    continue; //no plugin.yml found
-                }
-                ZipFile z = new ZipFile(f);
-                try (InputStream fis = z.getInputStream(ent);
-                        InputStreamReader fisr = new InputStreamReader(fis);
-                        BufferedReader scan = new BufferedReader(fisr)) {
-                    String in;
-                    while ((in = scan.readLine()) != null) {
-                        if (in.startsWith("name: ")) {
-                            if (in.substring(6).equalsIgnoreCase(name)) {
-                                return f;
-                            }
-                        }
-                    }
-                }
-            } catch (IOException ex) {
-                Debugger.error(ex, "Error reading plugin jarfiles");
-            }
-        }
-        return null;
-    }
-
-    public static <K, V> Map<K, V> difference(Map<K, V> initial, Map<K, V> replacer) {
-        Map<K, V> back = new HashMap<>();
-        back.putAll(initial);
-        back.putAll(replacer);
-        back.entrySet().removeAll(initial.entrySet());
-        return back;
     }
 
     /**
@@ -248,115 +173,6 @@ public final class Reflections {
     }
 
     /**
-     * Returns a {@link Set} of keys that closest match the passed in string
-     * value
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param map The {@link Map} with a string key to look through
-     * @param search The string to use as a base to search for
-     * @return A list of the closest matching keys, will be empty if no keys
-     *         begin with the search phrase
-     */
-    public static Set<String> matchClosestKeys(Map<String, ?> map, String search) {
-        return map.keySet().stream().filter(k -> k.startsWith(search)).collect(Collectors.toSet());
-    }
-
-    /**
-     * Returns a {@link List} of values mapped from keys that closest match the
-     * passed in string value
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param <T> The type of the values
-     * @param map The {@link Map} to look through
-     * @param search The string to use as a base to search for
-     * @return A list of the closest matching values, will be empty if no keys
-     *         begin with the search phrase
-     */
-    public static <T> List<T> matchClosestValues(Map<String, T> map, String search) {
-        return Reflections.matchClosestKeys(map, search).stream().map(map::get).collect(Collectors.toList());
-    }
-
-    /**
-     * Returns a new {@link ArrayList} of the passed parameters that is not
-     * fixed-size, akin to what {@link Arrays#asList(Object...)} returns
-     * 
-     * @since 0.1.0
-     * @version 0.1.0
-     * 
-     * @param <T> The type of the objects being passed in
-     * @param items The parameters to add to a list
-     * @return A new {@link List} of the items, or an empty list if no params
-     */
-    public static <T> List<T> nonFixedList(T... items) {
-        return new ArrayList<>(Arrays.asList(items));
-    }
-
-    /**
-     * Provides a way of mutating an object (into a new result) without worrying
-     * about null safety. This is particularly useful in constructor
-     * overloading, where null safety cannot be determined before having
-     * to call upon the variable
-     * 
-     * @since 0.2.0
-     * @version 0.2.0
-     * 
-     * @param <I> The potentially null variable to be mutated
-     * @param <R> The expected result type
-     * @param in The variable to evaluate for a mutation
-     * @param act The action to take on the variable
-     * @return The expected result
-     * @throws IllegalArgumentException if the passed parameter is null
-     */
-    public static <I, R> R nullSafeMutation(I in, Function<I, R> act) {
-        Validate.notNull(in);
-        return act.apply(in);
-    }
-
-    /**
-     * Performs an operation with a lock, saving room by not requiring a lot of
-     * {@code try-finally} blocks
-     * 
-     * @since 0.2.0
-     * @version 0.2.0
-     * 
-     * @param lock The {@link Lock} to utilize
-     * @param operation The code to be run
-     */
-    public static void operateLock(Lock lock, Runnable operation) {
-        lock.lock();
-        try {
-            operation.run();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Performs an operation with a lock, saving room by not requiring a lot of
-     * {@code try-finally} blocks
-     *
-     * @since 0.2.0
-     * @version 0.2.0
-     *
-     * @param <R> The return type of the {@link Supplier}
-     * @param lock      The {@link Lock} to utilize
-     * @param operation The code to be run
-     * @return A value returned from the inner {@link Supplier}
-     */
-    public static <R> R operateLock(Lock lock, Supplier<R> operation) {
-        lock.lock();
-        try {
-            return operation.get();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
      * Prints out the stack history 10 calls back
      *
      * @version 0.2.0
@@ -381,26 +197,6 @@ public final class Reflections {
             sb.append(String.format("\n\tCalled from:\t%s#%s:%d\t\tFile: %s", elems[i].getClassName(), elems[i].getMethodName(), elems[i].getLineNumber(), elems[i].getFileName()));
         }
         Logging.info(sb.toString());
-    }
-
-    public static UUID parseUUID(String uuid) {
-        Validate.isTrue(uuid.length() == 32 || uuid.length() == 36, "Invalid UUID format supplied");
-        if (uuid.length() == 36) {
-            return UUID.fromString(uuid);
-        } else {
-            return UUID.fromString(uuid.substring(0, 8)
-                    + "-" + uuid.substring(8, 12)
-                    + "-" + uuid.substring(12, 16)
-                    + "-" + uuid.substring(16, 20)
-                    + "-" + uuid.substring(20, 32));
-        }
-    }
-
-    public static String objectString(Object in) {
-        if (in == null) {
-            return "null";
-        }
-        return in.getClass().getName() + "@" + Integer.toHexString(in.hashCode());
     }
 
     public static Class<?> getArrayClass(Class<?> componentType) throws ClassNotFoundException {
@@ -431,152 +227,266 @@ public final class Reflections {
         }
         return classLoader != null ? classLoader.loadClass(name) : Class.forName(name);
     }
-    
+
+    //TODO: Remove as of 0.4.0
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Retrieves a {@link Map Map&lt;K, V&gt;} which represents all entries in the
+     * {@code replacer} map parameter which do not exist in the {@code initial} parameter
+     *
+     * @since 0.3.2
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Clump#difference(Map, Map)
+     * @param initial The initial map to filter by
+     * @param replacer The map with entries to validate for differences
+     * @param <K> The key type of the maps
+     * @param <V> The value type of the maps
+     * @return A {@link Map Map&lt;K, V&gt;} with entries solely existing in {@code replacer}
+     */
+    @Deprecated
+    public static <K, V> Map<K, V> difference(Map<K, V> initial, Map<K, V> replacer) {
+        return Clump.difference(initial, replacer);
+    }
+
+    @Deprecated
+    public static UUID parseUUID(String uuid) {
+        return Readable.parseUUID(uuid);
+    }
+
+    @Deprecated
+    public static String objectString(Object in) {
+        return Readable.objectString(in);
+    }
+
     //guaranteed safety, so no class cast if wrong (just converts)
     //CCE occurs for bad Class<T> parameter
+    @Deprecated
     public static <T extends Number> T convertNumber(Number in, Class<T> out) {
-        if (Primitives.isWrapperType(out)) {
-            out = Primitives.unwrap(out);
-        }
-        if (out == int.class) {
-            return (T) (Number) in.intValue();
-        } else if (out == byte.class) {
-            return (T) (Number) in.byteValue();
-        } else if (out == short.class) {
-            return (T) (Number) in.shortValue();
-        } else if (out == long.class) {
-            return (T) (Number) in.longValue();
-        } else if (out == float.class) {
-            return (T) (Number) in.floatValue();
-        } else if (out == double.class) {
-            return (T) (Number) in.doubleValue();
-        } else {
-            return (T) in; //CCE
-        }
+        return Readable.convertNumber(in ,out);
     }
 
+    @Deprecated
     public static Optional<Integer> parseInt(String s) {
-        try {
-            return Optional.of(Integer.parseInt(s));
-        } catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        return Readable.parseInt(s);
     }
 
+    @Deprecated
     public static Optional<Double> parseDouble(String s) {
-        try {
-            return Optional.of(Double.parseDouble(s));
-        } catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        return Readable.parseDouble(s);
     }
 
+    @Deprecated
     public static Optional<Float> parseFloat(String s) {
-        try {
-            return Optional.of(Float.parseFloat(s));
-        } catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        return Readable.parseFloat(s);
     }
 
+    @Deprecated
     public static Optional<Short> parseShort(String s) {
-        try {
-            return Optional.of(Short.parseShort(s));
-        } catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        return Readable.parseShort(s);
     }
 
+    @Deprecated
     public static Optional<Long> parseLong(String s) {
-        try {
-            return Optional.of(Long.parseLong(s));
-        } catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        return Readable.parseLong(s);
     }
 
+    @Deprecated
     public static Optional<Byte> parseByte(String s) {
-        try {
-            return Optional.of(Byte.parseByte(s));
-        } catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        return Readable.parseByte(s);
     }
 
+    @Deprecated
     public static String properEnumName(Enum<?> val) {
-        String s = val.name().toLowerCase();
-        char[] ch = s.toCharArray();
-        boolean skip = false;
-        for (int i = 0; i < ch.length; i++) {
-            if (skip) {
-                skip = false;
-                continue;
-            }
-            if (i == 0) {
-                ch[i] = Character.toUpperCase(ch[i]);
-                continue;
-            }
-            if (ch[i] == '_') {
-                ch[i] = ' ';
-                if (i < ch.length - 1) {
-                    ch[i + 1] = Character.toUpperCase(ch[i + 1]);
-                }
-                skip = true;
-            }
-        }
-        return new String(ch).intern();
+        return Readable.properEnumName(val);
     }
 
     /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Converts a stack trace into a String for ease-of-use in network-level debugging
+     *
+     * @since 0.3.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Readable#stackTraceToString(Throwable)
+     * @param t The {@link Throwable}
+     * @return A String form of the exception
+     */
+    @Deprecated
+    public static String stackTraceToString(Throwable t) {
+        return Readable.stackTraceToString(t);
+    }
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Performs an operation with a lock, saving room by not requiring a lot of
+     * {@code try-finally} blocks
+     *
+     * @since 0.2.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Parallel#operateLock(Lock, Runnable)
+     * @param lock The {@link Lock} to utilize
+     * @param operation The code to be run
+     */
+    @Deprecated
+    public static void operateLock(Lock lock, Runnable operation) {
+        Parallel.operateLock(lock, operation);
+    }
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Performs an operation with a lock, saving room by not requiring a lot of
+     * {@code try-finally} blocks
+     *
+     * @since 0.2.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Parallel#operateLock(Lock, Supplier)
+     * @param <R> The return type of the {@link Supplier}
+     * @param lock      The {@link Lock} to utilize
+     * @param operation The code to be run
+     * @return A value returned from the inner {@link Supplier}
+     */
+    @Deprecated
+    public static <R> R operateLock(Lock lock, Supplier<R> operation) {
+        return Parallel.operateLock(lock, operation);
+    }
+
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Returns a {@link Set} of keys that closest match the passed in string
+     * value
+     *
+     * @since 0.1.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Clump#matchClosestKeys(Map, String)
+     * @param map The {@link Map} with a string key to look through
+     * @param search The string to use as a base to search for
+     * @return A list of the closest matching keys, will be empty if no keys
+     *         begin with the search phrase
+     */
+    @Deprecated
+    public static Set<String> matchClosestKeys(Map<String, ?> map, String search) {
+        return Clump.matchClosestKeys(map, search);
+    }
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Returns a {@link List} of values mapped from keys that closest match the
+     * passed in string value
+     *
+     * @since 0.1.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Clump#matchClosestValues(Map, String)
+     * @param <T> The type of the values
+     * @param map The {@link Map} to look through
+     * @param search The string to use as a base to search for
+     * @return A list of the closest matching values, will be empty if no keys
+     *         begin with the search phrase
+     */
+    @Deprecated
+    public static <T> List<T> matchClosestValues(Map<String, T> map, String search) {
+        return Clump.matchClosestValues(map, search);
+    }
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Returns a new {@link ArrayList} of the passed parameters that is not
+     * fixed-size, akin to what {@link Arrays#asList(Object...)} returns
+     *
+     * @since 0.1.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Clump#nonFixedList(Object[])
+     * @param <T> The type of the objects being passed in
+     * @param items The parameters to add to a list
+     * @return A new {@link List} of the items, or an empty list if no params
+     */
+    @Deprecated
+    public static <T> List<T> nonFixedList(T... items) {
+        return Clump.nonFixedList(items);
+    }
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
+     * Provides a way of mutating an object (into a new result) without worrying
+     * about null safety. This is particularly useful in constructor
+     * overloading, where null safety cannot be determined before having
+     * to call upon the variable
+     *
+     * @since 0.2.0
+     * @version 0.3.3
+     *
+     * @deprecated
+     * @see Clump#nullSafeMutation(Object, Function)
+     * @param <I> The potentially null variable to be mutated
+     * @param <R> The expected result type
+     * @param in The variable to evaluate for a mutation
+     * @param act The action to take on the variable
+     * @return The expected result
+     * @throws IllegalArgumentException if the passed parameter is null
+     */
+    @Deprecated
+    public static <I, R> R nullSafeMutation(I in, Function<I, R> act) {
+        return Clump.nullSafeMutation(in, act);
+    }
+
+    /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
      * Façade method for streaming {@link Iterable}, so that Iterable can be accepted as a general parameter
      *
      * @since 0.3.0
-     * @version 0.3.0
+     * @version 0.3.3
      *
+     * @deprecated
+     * @see Clump#stream(Iterable)
      * @param itr The {@link Iterable} to turn into a stream
      * @param <T> The type of the stream
      * @return A {@link Stream} of the iterable elements
      */
+    @Deprecated
     public static <T> Stream<T> stream(Iterable<T> itr) {
-        if (itr instanceof Collection) {
-            return ((Collection<T>) itr).stream();
-        } else {
-            return StreamSupport.stream(itr.spliterator(), false);
-        }
+        return Clump.stream(itr);
     }
 
     /**
+     * <b>DUE FOR REMOVAL IN 0.4.0</b>
+     *
      * Façade method for arrays, to simplify accepting general parameters even further
      *
      * @since 0.3.0
-     * @version 0.3.0
+     * @version 0.3.3
      *
+     * @deprecated
+     * @see Stream#of(Object[])
+     * @see Arrays#stream(Object[])
      * @param obj The object(s) to stream
      * @param <T> The type of the objects and stream
      * @return A {@link Stream} of the iterable elements
      */
+    @Deprecated
     public static <T> Stream<T> stream(T... obj) {
         return Arrays.stream(obj);
     }
-
-    /**
-     * Converts a stack trace into a String for ease-of-use in network-level debugging
-     *
-     * @since 0.3.0
-     * @version 0.3.0
-     *
-     * @param t The {@link Throwable}
-     * @return A String form of the exception
-     */
-    public static String stackTraceToString(Throwable t) {
-        try (StringWriter sw = new StringWriter();
-             PrintWriter pw = new PrintWriter(sw)) {
-            t.printStackTrace(pw);
-            return sw.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return t.toString(); //not the best, but better than null
-    }
-
 }

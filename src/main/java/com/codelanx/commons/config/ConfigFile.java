@@ -26,8 +26,10 @@ import com.google.common.primitives.Primitives;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,13 +85,11 @@ public interface ConfigFile extends InfoFile {
             return null;
         }
         if (o instanceof Map && FileSerializable.class.isAssignableFrom(c)) {
-            Map<String, Object> map = (Map<String, Object>) o;
-            Class<?> type = map.getClass();
             try {
                 //TODO: no raw reflection here
-                Constructor<T> obj = c.getConstructor(type);
+                Constructor<T> obj = c.getDeclaredConstructor(Map.class);
                 obj.setAccessible(true);
-                return obj.newInstance(map);
+                return obj.newInstance(o);
             } catch (NoSuchMethodException
                     | InstantiationException
                     | IllegalAccessException
@@ -136,14 +136,21 @@ public interface ConfigFile extends InfoFile {
         Collection<?> col = this.as(collection);
         if (FileSerializable.class.isAssignableFrom(type)) {
             //do a conversion
-            Object nonMatch = col.stream().filter(o -> !(o instanceof Map) || !type.isAssignableFrom(o.getClass())).findAny().orElse(null);
+            Object nonMatch = col.stream().filter(o -> !(o instanceof Map) && !type.isAssignableFrom(o.getClass())).findAny().orElse(null);
             if (nonMatch != null) {
                 throw new IllegalArgumentException("Cannot deserialize non-map object: " + nonMatch);
             }
             try {
                 //TODO: no raw reflection here
-                T back = collection.newInstance();
-                Constructor<G> obj = type.getConstructor(Map.class);
+                T back;
+                if (List.class.equals(collection)) {
+                    back = (T) new ArrayList<G>();
+                } else if (Set.class.equals(collection)) {
+                    back = (T) new HashSet<G>();
+                } else {
+                    back = collection.newInstance();
+                }
+                Constructor<G> obj = type.getDeclaredConstructor(Map.class);
                 obj.setAccessible(true);
                 AtomicBoolean broken = new AtomicBoolean();
                 col.stream().filter(o -> broken.compareAndSet(false, o != null && !(o instanceof Map) && !type.isAssignableFrom(o.getClass()))).forEach(o -> {
@@ -230,7 +237,7 @@ public interface ConfigFile extends InfoFile {
                     map = (Class<M>) (Class<?>) LinkedHashMap.class;
                 }
                 M back = map.newInstance();
-                Constructor<V> obj = value.getConstructor(Map.class);
+                Constructor<V> obj = value.getDeclaredConstructor(Map.class);
                 obj.setAccessible(true);
                 AtomicBoolean broken = new AtomicBoolean();
                 m.entrySet().stream()
@@ -267,8 +274,16 @@ public interface ConfigFile extends InfoFile {
             }
         }
         for (Map.Entry<?, ?> ent : m.entrySet()) {
-            if (!key.isInstance(ent.getKey()) || !value.isInstance(ent.getValue())) {
-                throw new ClassCastException("Inappropriate generic types for map");
+            boolean gKey = key.isInstance(ent.getKey());
+            boolean gVal = ent.getValue() == null || value.isInstance(ent.getValue());
+            if (!gKey || !gVal) {
+                String type = !gKey ? "Key" : "Value";
+                Object o = !gKey ? ent.getKey() : ent.getValue();
+                if (o != null) {
+                    o = o.getClass().getName();
+                }
+                String expected = !gKey ? key.getName() : value.getName();
+                throw new ClassCastException("Inappropriate generic types for map. Expected " + type + ": " + expected + ", found: " + o);
             }
         }
         return (M) m;
