@@ -19,6 +19,9 @@
  */
 package com.codelanx.commons.util;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 /**
  * Provides utility methods for simplifying lambda operations
  *
@@ -60,4 +63,19 @@ public class Lambdas {
         return !Lambdas.notNull(o);
     }
 
+    /**
+     * Useful in {@link java.util.stream.Stream#filter(Predicate)}.
+     *
+     * <p>Maps a stream element to a new identity {@code U}, and tests it
+     * against the passed {@link Predicate Predicate<U>}.
+     *
+     * @param mapper The mapping function of the stream elements to a new testable identity
+     * @param predicate The predicate for our new identity
+     * @param <T> The original stream element type
+     * @param <U> Our new identity type
+     * @return A {@link Predicate Predicate<T>} which will map and test against stream elements of {@code <T>}
+     */
+    public static <T, U> Predicate<T> mapToPredicate(Function<T, U> mapper, Predicate<U> predicate) {
+        return o -> predicate.test(mapper.apply(o));
+    }
 }

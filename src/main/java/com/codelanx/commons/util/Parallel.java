@@ -1,5 +1,6 @@
 package com.codelanx.commons.util;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
@@ -62,6 +63,15 @@ public final class Parallel {
             T back = initValue.get();
             curr = currentValue.get();
             return curr == null ? back : curr;
+        }
+        return curr;
+    }
+
+    public static <T> T doubleLockInit(AtomicReference<T> ref, Supplier<T> initValue) {
+        T curr = ref.get();
+        if (curr == null) {
+            ref.compareAndSet(null, initValue.get());
+            return ref.get();
         }
         return curr;
     }

@@ -74,7 +74,7 @@ public final class RNG {
     public static final ThreadLocalRandomWrapper THREAD_LOCAL = ThreadLocalRandom::current;
     
     @FunctionalInterface
-    private static interface ThreadLocalRandomWrapper {
+    public static interface ThreadLocalRandomWrapper {
         public ThreadLocalRandom current();
     }
 
