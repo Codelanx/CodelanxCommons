@@ -2,6 +2,9 @@ package com.codelanx.commons.util;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -74,5 +77,67 @@ public final class Parallel {
             return ref.get();
         }
         return curr;
+    }
+
+    public static class StampLocks {
+
+        public static <R> R operate(StampedLock lock, Function<StampedLock, Long> type, BiConsumer<StampedLock, Long> release, Function<Long, R> operation) {
+            R back;
+            long stamp = type.apply(lock);
+            try {
+                back = operation.apply(stamp);
+            } finally {
+                release.accept(lock, stamp);
+            }
+            return back;
+        }
+
+        public static <R> R operate(StampedLock lock, Function<StampedLock, Long> type, BiConsumer<StampedLock, Long> release, Supplier<R> operation) {
+            return StampLocks.operate(lock, type, release, i -> operation.get());
+        }
+
+        public static void operate(StampedLock lock, Function<StampedLock, Long> type, BiConsumer<StampedLock, Long> release, Runnable operation) {
+            StampLocks.operate(lock, type, release, i -> {
+                operation.run();
+                return null;
+            });
+        }
+
+        public static void optimisticRead(StampedLock lock, Runnable operation) {
+            StampLocks.operate(lock, StampedLock::tryOptimisticRead, StampedLock::unlock, operation);
+        }
+
+        public static <R> R optimisticRead(StampedLock lock, Supplier<R> operation) {
+            return StampLocks.operate(lock, StampedLock::tryOptimisticRead, StampedLock::unlock, operation);
+        }
+
+        public static <R> R optimisticRead(StampedLock lock, Function<Long, R> operation) {
+            return StampLocks.operate(lock, StampedLock::tryOptimisticRead, StampedLock::unlock, operation);
+        }
+
+        public static void read(StampedLock lock, Runnable operation) {
+            StampLocks.operate(lock, StampedLock::readLock, StampedLock::unlockRead, operation);
+        }
+
+        public static <R> R read(StampedLock lock, Supplier<R> operation) {
+            return StampLocks.operate(lock, StampedLock::readLock, StampedLock::unlockRead, operation);
+        }
+
+        public static <R> R read(StampedLock lock, Function<Long, R> operation) {
+            return StampLocks.operate(lock, StampedLock::readLock, StampedLock::unlockRead, operation);
+        }
+
+        public static void write(StampedLock lock, Runnable operation) {
+            StampLocks.operate(lock, StampedLock::writeLock, StampedLock::unlockWrite, operation);
+        }
+
+        public static <R> R write(StampedLock lock, Supplier<R> operation) {
+            return StampLocks.operate(lock, StampedLock::writeLock, StampedLock::unlockWrite, operation);
+        }
+
+        public static <R> R write(StampedLock lock, Function<Long, R> operation) {
+            return StampLocks.operate(lock, StampedLock::writeLock, StampedLock::unlockWrite, operation);
+        }
+
     }
 }
