@@ -73,7 +73,7 @@ public class Lambdas {
      * @param predicate The predicate for our new identity
      * @param <T> The original stream element type
      * @param <U> Our new identity type
-     * @return A {@link Predicate Predicate<T>} which will map and test against stream elements of {@code <T>}
+     * @return A {@link Predicate Predicate&lt;T&gt;} which will map and test against stream elements of {@code &lt;T&gt;}
      */
     public static <T, U> Predicate<T> mapToPredicate(Function<T, U> mapper, Predicate<U> predicate) {
         return o -> predicate.test(mapper.apply(o));
