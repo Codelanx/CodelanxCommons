@@ -116,9 +116,9 @@ public final class Parallel {
 
         public static <R> R optimisticRead(StampedLock lock, Function<Long, R> operation) {
             return StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
-                R back = operation.apply(i);
+                R back = i == 0 ? null : operation.apply(i);
                 try {
-                    if (!lock.validate(i)) {
+                    if (i == 0 || !lock.validate(i)) {
                         i = lock.readLock();
                         back = operation.apply(i);
                     }
