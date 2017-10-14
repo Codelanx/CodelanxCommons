@@ -105,6 +105,13 @@ public final class Parallel {
             });
         }
 
+        public static void optimisticRead(StampedLock lock, Runnable operation) {
+            StampLocks.optimisticRead(lock, i -> {
+                operation.run();
+                return null;
+            });
+        }
+
         public static <R> R optimisticRead(StampedLock lock, Supplier<R> operation) {
             return StampLocks.optimisticRead(lock, i -> operation.get());
         }
@@ -122,6 +129,10 @@ public final class Parallel {
                 }
                 return back;
             });
+        }
+
+        public static void read(StampedLock lock, Runnable operation) {
+            StampLocks.operate(lock, StampedLock::readLock, StampedLock::unlockRead, operation);
         }
 
         public static <R> R read(StampedLock lock, Supplier<R> operation) {

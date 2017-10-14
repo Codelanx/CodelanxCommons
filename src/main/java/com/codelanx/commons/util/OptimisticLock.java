@@ -23,12 +23,21 @@ public class OptimisticLock extends StampedLock {
         StampLocks.operate(this, type, release, operation);
     }
 
+    public void forcdRead(Runnable operation) {
+        StampLocks.read(this, operation);
+    }
+
     public <R> R forcedRead(Supplier<R> operation) {
         return StampLocks.read(this, operation);
     }
 
     public <R> R forcedRead(Function<Long, R> operation) {
         return StampLocks.read(this, operation);
+    }
+
+    //optimistic
+    public void read(Runnable operation) {
+        StampLocks.optimisticRead(this, operation);
     }
 
     //optimistic
