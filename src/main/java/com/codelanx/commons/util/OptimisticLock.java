@@ -23,24 +23,22 @@ public class OptimisticLock extends StampedLock {
         StampLocks.operate(this, type, release, operation);
     }
 
-    public void optimisticRead(Runnable operation) {
-        StampLocks.optimisticRead(this, operation);
+    public <R> R forcedRead(Supplier<R> operation) {
+        return StampLocks.read(this, operation);
     }
 
-    public <R> R optimisticRead(Supplier<R> operation) {
-        return StampLocks.optimisticRead(this, operation);
+    public <R> R forcedRead(Function<Long, R> operation) {
+        return StampLocks.read(this, operation);
     }
 
-    public <R> R optimisticRead(Function<Long, R> operation) {
-        return StampLocks.optimisticRead(this, operation);
-    }
-
+    //optimistic
     public <R> R read(Supplier<R> operation) {
-        return StampLocks.read(this, operation);
+        return StampLocks.optimisticRead(this, operation);
     }
 
+    //optimistic
     public <R> R read(Function<Long, R> operation) {
-        return StampLocks.read(this, operation);
+        return StampLocks.optimisticRead(this, operation);
     }
 
     public void write(Runnable operation) {
