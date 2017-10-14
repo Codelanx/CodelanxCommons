@@ -120,8 +120,8 @@ public final class Parallel {
             return StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
                 R back = i == 0 ? null : operation.apply(i);
                 if (i == 0 || !lock.validate(i)) {
+                    i = lock.readLock();
                     try {
-                        i = lock.readLock();
                         back = operation.apply(i);
                     } finally {
                         lock.unlockRead(i);
@@ -155,15 +155,6 @@ public final class Parallel {
             return StampLocks.operate(lock, StampedLock::writeLock, StampedLock::unlockWrite, operation);
         }
 
-        private static long writeUnsafe(StampedLock lock, long stamp, Runnable operation) {
-            long w = lock.tryConvertToWriteLock(stamp);
-            if (w == 0) {
-                w = lock.writeLock();
-            }
-            operation.run();
-            return w;
-        }
-
         public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
             StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
                 R val = i == 0 ? null : read.get();
@@ -176,10 +167,17 @@ public final class Parallel {
             });
         }
 
+        public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
+            StampLocks.readThenWrite(lock, read, r -> true, write);
+        }
+
+        public static void writeIf(StampedLock lock, Supplier<Boolean> read, Runnable write) {
+            StampLocks.readThenWrite(lock, read, Boolean.TRUE::equals, b -> write.run());
+        }
+
         private static <R> void checkWrite(StampedLock lock, Supplier<R> val, Supplier<Long> stamp, Predicate<R> writeIf, Consumer<R> write) {
-            long s = 0;
+            long s = stamp.get();
             try {
-                s = stamp.get();
                 R fval = val.get();
                 if (writeIf.test(fval)) {
                     //do write operation
@@ -190,12 +188,13 @@ public final class Parallel {
             }
         }
 
-        public static void writeIf(StampedLock lock, Supplier<Boolean> read, Runnable write) {
-            StampLocks.readThenWrite(lock, read, Boolean.TRUE::equals, b -> write.run());
-        }
-
-        public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
-            StampLocks.readThenWrite(lock, read, r -> true, write);
+        private static long writeUnsafe(StampedLock lock, long stamp, Runnable operation) {
+            long w = lock.tryConvertToWriteLock(stamp);
+            if (w == 0) {
+                w = lock.writeLock();
+            }
+            operation.run();
+            return w;
         }
 
     }
