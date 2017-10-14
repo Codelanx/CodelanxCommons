@@ -157,26 +157,26 @@ public final class Parallel {
             StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
                 R val = i == 0 ? null : read.get();
                 if (i == 0 || !lock.validate(i)) {
-                    try {
-                        i = lock.readLock();
-                        R fval = read.get();
-                        if (writeIf.test(fval)) {
-                            //do write operation
-                            i = StampLocks.writeUnsafe(lock, i, () -> write.accept(fval));
-                        }
-                    } finally {
-                        lock.unlock(i);
-                    }
+                    StampLocks.checkWrite(lock, read, lock::readLock, writeIf, write);
                 } else {
-                    //do write operation
-                    try {
-                        i = StampLocks.writeUnsafe(lock, i, () -> write.accept(val));
-                    } finally {
-                        lock.unlockWrite(i);
-                    }
+                    StampLocks.checkWrite(lock, () -> val, () -> i, writeIf, write);
                 }
                 return null;
             });
+        }
+
+        private static <R> void checkWrite(StampedLock lock, Supplier<R> val, Supplier<Long> stamp, Predicate<R> writeIf, Consumer<R> write) {
+            long s = 0;
+            try {
+                s = stamp.get();
+                R fval = val.get();
+                if (writeIf.test(fval)) {
+                    //do write operation
+                    s = StampLocks.writeUnsafe(lock, s, () -> write.accept(fval));
+                }
+            } finally {
+                lock.unlock(s);
+            }
         }
 
         public static void writeIf(StampedLock lock, Supplier<Boolean> read, Runnable write) {

@@ -2,6 +2,7 @@ package com.codelanx.commons.util;
 
 import org.apache.commons.lang3.Validate;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +23,8 @@ import java.util.stream.StreamSupport;
  * @version 0.3.3
  */
 public final class Clump {
+
+    public static final Object[] EMPTY_ARRAY = new Object[0];
 
     private Clump() {
     }
@@ -131,6 +134,19 @@ public final class Clump {
         back.putAll(initial);
         back.putAll(replacer);
         back.entrySet().removeAll(initial.entrySet());
+        return back;
+    }
+
+    public <T> T[] concat(T[]... yolo) {
+        if (yolo.length == 0) {
+            return (T[]) EMPTY_ARRAY;
+        }
+        int len = Arrays.stream(yolo).map(a -> a.length).reduce(0, Integer::sum);
+        T[] back = (T[]) Array.newInstance(yolo[0].getClass().getComponentType(), len); //better hope they're the same type olololo
+        int offset = 0;
+        for (int i = 0; i < yolo.length; offset += yolo[i++].length) {
+            System.arraycopy(yolo[i], 0, back, offset, yolo[i].length);
+        }
         return back;
     }
 }
