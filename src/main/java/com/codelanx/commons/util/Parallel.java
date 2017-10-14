@@ -131,10 +131,6 @@ public final class Parallel {
             });
         }
 
-        public static void read(StampedLock lock, Runnable operation) {
-            StampLocks.operate(lock, StampedLock::readLock, StampedLock::unlockRead, operation);
-        }
-
         public static <R> R read(StampedLock lock, Supplier<R> operation) {
             return StampLocks.operate(lock, StampedLock::readLock, StampedLock::unlockRead, operation);
         }
@@ -194,7 +190,7 @@ public final class Parallel {
             StampLocks.readThenWrite(lock, read, Boolean.TRUE::equals, b -> write.run());
         }
 
-        private static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
+        public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
             StampLocks.readThenWrite(lock, read, r -> true, write);
         }
 
