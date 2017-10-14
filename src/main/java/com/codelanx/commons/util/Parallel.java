@@ -4,7 +4,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -117,13 +119,13 @@ public final class Parallel {
         public static <R> R optimisticRead(StampedLock lock, Function<Long, R> operation) {
             return StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
                 R back = i == 0 ? null : operation.apply(i);
-                try {
-                    if (i == 0 || !lock.validate(i)) {
+                if (i == 0 || !lock.validate(i)) {
+                    try {
                         i = lock.readLock();
                         back = operation.apply(i);
+                    } finally {
+                        lock.unlockRead(i);
                     }
-                } finally {
-                    lock.unlockRead(i);
                 }
                 return back;
             });
@@ -151,6 +153,49 @@ public final class Parallel {
 
         public static <R> R write(StampedLock lock, Function<Long, R> operation) {
             return StampLocks.operate(lock, StampedLock::writeLock, StampedLock::unlockWrite, operation);
+        }
+
+        private static long writeUnsafe(StampedLock lock, long stamp, Runnable operation) {
+            long w = lock.tryConvertToWriteLock(stamp);
+            if (w == 0) {
+                w = lock.writeLock();
+            }
+            operation.run();
+            return w;
+        }
+
+        public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
+            StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
+                R val = i == 0 ? null : read.get();
+                if (i == 0 || !lock.validate(i)) {
+                    try {
+                        i = lock.readLock();
+                        R fval = read.get();
+                        if (writeIf.test(fval)) {
+                            //do write operation
+                            i = StampLocks.writeUnsafe(lock, i, () -> write.accept(fval));
+                        }
+                    } finally {
+                        lock.unlock(i);
+                    }
+                } else {
+                    //do write operation
+                    try {
+                        i = StampLocks.writeUnsafe(lock, i, () -> write.accept(val));
+                    } finally {
+                        lock.unlockWrite(i);
+                    }
+                }
+                return null;
+            });
+        }
+
+        public static void writeIf(StampedLock lock, Supplier<Boolean> read, Runnable write) {
+            StampLocks.readThenWrite(lock, read, Boolean.TRUE::equals, b -> write.run());
+        }
+
+        private static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
+            StampLocks.readThenWrite(lock, read, r -> true, write);
         }
 
     }
