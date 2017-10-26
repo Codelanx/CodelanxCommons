@@ -155,27 +155,25 @@ public final class Parallel {
             return StampLocks.operate(lock, StampedLock::writeLock, StampedLock::unlockWrite, operation);
         }
 
-        public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
-            StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
+        public static <R> R readThenWrite(StampedLock lock, Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
+            return StampLocks.operate(lock, StampedLock::tryOptimisticRead, (l, i) -> {}, i -> {
                 R val = i == 0 ? null : read.get();
                 if (i == 0 || !lock.validate(i)) {
-                    StampLocks.checkWrite(lock, read, lock::readLock, writeIf, write);
-                } else {
-                    StampLocks.checkWrite(lock, () -> val, () -> i, writeIf, write);
+                    return StampLocks.checkWrite(lock, read, lock::readLock, writeIf, write);
                 }
-                return null;
+                return StampLocks.checkWrite(lock, () -> val, () -> i, writeIf, write);
             });
         }
 
-        public static <R> void readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
-            StampLocks.readThenWrite(lock, read, r -> true, write);
+        public static <R> R readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
+            return StampLocks.readThenWrite(lock, read, r -> true, write);
         }
 
         public static void writeIf(StampedLock lock, Supplier<Boolean> read, Runnable write) {
             StampLocks.readThenWrite(lock, read, Boolean.TRUE::equals, b -> write.run());
         }
 
-        private static <R> void checkWrite(StampedLock lock, Supplier<R> val, Supplier<Long> stamp, Predicate<R> writeIf, Consumer<R> write) {
+        private static <R> R checkWrite(StampedLock lock, Supplier<R> val, Supplier<Long> stamp, Predicate<R> writeIf, Consumer<R> write) {
             long s = stamp.get();
             try {
                 R fval = val.get();
@@ -183,6 +181,7 @@ public final class Parallel {
                     //do write operation
                     s = StampLocks.writeUnsafe(lock, s, () -> write.accept(fval));
                 }
+                return fval;
             } finally {
                 lock.unlock(s);
             }

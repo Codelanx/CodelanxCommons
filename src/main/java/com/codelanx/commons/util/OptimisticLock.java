@@ -62,15 +62,15 @@ public class OptimisticLock extends StampedLock {
         return StampLocks.write(this, operation);
     }
 
-    public <R> void readThenWrite(Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
-        StampLocks.readThenWrite(this, read, writeIf, write);
+    public <R> R readThenWrite(Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
+        return StampLocks.readThenWrite(this, read, writeIf, write);
     }
 
     public void writeIf(Supplier<Boolean> read, Runnable write) {
         StampLocks.writeIf(this, read, write);
     }
 
-    private <R> void readThenWrite(Supplier<R> read, Consumer<R> write) {
-        StampLocks.readThenWrite(this, read, write);
+    private <R> R readThenWrite(Supplier<R> read, Consumer<R> write) {
+        return StampLocks.readThenWrite(this, read, write);
     }
 }
