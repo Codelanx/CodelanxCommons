@@ -62,7 +62,7 @@ public final class Scheduler {
      * @return The scheduled Task
      */
     public static ScheduledFuture<?> runAsyncTaskRepeat(Runnable r, long startAfter, long delay) {
-        ScheduledFuture<?> sch = Scheduler.getService().scheduleWithFixedDelay(r, startAfter, delay, TimeUnit.MILLISECONDS);
+        ScheduledFuture<?> sch = Scheduler.getService().scheduleAtFixedRate(r, startAfter, delay, TimeUnit.MILLISECONDS);
         Scheduler.addTask(sch);
         return sch;
     }
