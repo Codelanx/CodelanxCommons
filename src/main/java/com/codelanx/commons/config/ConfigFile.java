@@ -77,7 +77,7 @@ public interface ConfigFile extends InfoFile {
             if (o == null) {
                 return Reflections.defaultPrimitiveValue(c);
             } else {
-                back = Primitives.wrap(c).cast(o);
+                back = Reflections.primitiveCast(c, o);
             }
             return back;
         }

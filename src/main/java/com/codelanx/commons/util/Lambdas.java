@@ -67,7 +67,7 @@ public class Lambdas {
      * Useful in {@link java.util.stream.Stream#filter(Predicate)}.
      *
      * <p>Maps a stream element to a new identity {@code U}, and tests it
-     * against the passed {@link Predicate Predicate<U>}.
+     * against the passed {@link Predicate Predicate&lt;U&gt;}.
      *
      * @param mapper The mapping function of the stream elements to a new testable identity
      * @param predicate The predicate for our new identity

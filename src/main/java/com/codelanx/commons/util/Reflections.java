@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
 /**
@@ -148,28 +149,233 @@ public final class Reflections {
      */
     public static <T> T defaultPrimitiveValue(Class<T> c) {
         if (c.isPrimitive() || Primitives.isWrapperType(c)) {
-            c = Primitives.unwrap(c);
-            T back = null;
-            if (c == boolean.class) {
-                back = c.cast(false);
-            } else if (c == char.class) { //god help me
-                back = c.cast((char) -1);
-            } else if (c == float.class) {
-                back = c.cast(-1F);
-            } else if (c == long.class) {
-                back = c.cast(-1L);
-            } else if (c == double.class) {
-                back = c.cast(-1D);
-            } else if (c == int.class) {
-                back = c.cast(-1); //ha
-            } else if (c == short.class) {
-                back = c.cast((short) -1);
-            } else if (c == byte.class) {
-                back = c.cast((byte) -1);
+            c = Primitives.wrap(c);
+            Class<T> t = Primitives.unwrap(c);
+            if (t == boolean.class) {
+                return c.cast(false);
+            } else if (t == char.class) { //god help me
+                return c.cast((char) -1);
+            } else if (t == float.class) {
+                return c.cast(-1F);
+            } else if (t == long.class) {
+                return c.cast(-1L);
+            } else if (t == double.class) {
+                return c.cast(-1D);
+            } else if (t == int.class) {
+                return c.cast(-1); //ha
+            } else if (t == short.class) {
+                return c.cast((short) -1);
+            } else if (t == byte.class) {
+                return c.cast((byte) -1);
             }
-            return back;
         }
         return null;
+    }
+
+    public static <T> T primitiveCast(Class<T> type, Object initVal) {
+        if (type.isPrimitive() || Primitives.isWrapperType(type)) {
+            type = Primitives.wrap(type);
+            Class<T> primType = Primitives.unwrap(type);
+            Class<?> initType = Primitives.wrap(initVal.getClass());
+            Class<?> initPrim = Primitives.unwrap(initType);
+            //no wait, it gets worse
+            if (initPrim == boolean.class) {
+                return rawPrimitiveMapping(primType, (boolean) initVal);
+            } else if (initPrim == long.class) {
+                return rawPrimitiveMapping(primType, (long) initVal);
+            } else if (initPrim == char.class) {
+                return rawPrimitiveMapping(primType, (char) initVal);
+            } else if (initPrim == float.class) {
+                return rawPrimitiveMapping(primType, (float) initVal);
+            } else if (initPrim == long.class) {
+                return rawPrimitiveMapping(primType, (long) initVal);
+            } else if (initPrim == double.class) {
+                return rawPrimitiveMapping(primType, (double) initVal);
+            } else if (initPrim == int.class) {
+                return rawPrimitiveMapping(primType, (int) initVal);
+            } else if (initPrim == short.class) {
+                return rawPrimitiveMapping(primType, (short) initVal);
+            } else if (initPrim == byte.class) {
+                return rawPrimitiveMapping(primType, (byte) initVal);
+            }
+            throw new ClassCastException("Cannot cast " + initPrim.getName() + " to " + primType.getName());
+        }
+        return null;
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, boolean val) {
+        if (primitive == boolean.class) {
+            return (T) (Boolean) val;
+        }
+        throw new ClassCastException("Cannot cast boolean to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, char val) {
+        if (primitive == char.class) {
+            return (T) (Character) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast char to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == long.class) {
+            return wrap.cast((long) val);
+        } else if (primitive == float.class) {
+            return wrap.cast((float) val);
+        } if (primitive == double.class) {
+            return wrap.cast((double) val);
+        } else if (primitive == int.class) {
+            return wrap.cast((int) val);
+        } else if (primitive == short.class) {
+            return wrap.cast((short) val);
+        } else if (primitive == byte.class) {
+            return wrap.cast((byte) val);
+        }
+        throw new ClassCastException("Cannot cast char to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, long val) {
+        if (primitive == long.class) {
+            return (T) (Long) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast long to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == char.class) {
+            return wrap.cast((char) val);
+        } else if (primitive == float.class) {
+            return wrap.cast((float) val);
+        } if (primitive == double.class) {
+            return wrap.cast((double) val);
+        } else if (primitive == int.class) {
+            return wrap.cast((int) val);
+        } else if (primitive == short.class) {
+            return wrap.cast((short) val);
+        } else if (primitive == byte.class) {
+            return wrap.cast((byte) val);
+        }
+        throw new ClassCastException("Cannot cast long to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, int val) {
+        if (primitive == int.class) {
+            return (T) (Integer) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast int to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == char.class) {
+            return wrap.cast((char) val);
+        } else if (primitive == float.class) {
+            return wrap.cast((float) val);
+        } if (primitive == double.class) {
+            return wrap.cast((double) val);
+        } else if (primitive == long.class) {
+            return wrap.cast((long) val);
+        } else if (primitive == short.class) {
+            return wrap.cast((short) val);
+        } else if (primitive == byte.class) {
+            return wrap.cast((byte) val);
+        }
+        throw new ClassCastException("Cannot cast int to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, short val) {
+        if (primitive == short.class) {
+            return (T) (Short) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast short to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == char.class) {
+            return wrap.cast((char) val);
+        } else if (primitive == float.class) {
+            return wrap.cast((float) val);
+        } if (primitive == double.class) {
+            return wrap.cast((double) val);
+        } else if (primitive == int.class) {
+            return wrap.cast((int) val);
+        } else if (primitive == long.class) {
+            return wrap.cast((long) val);
+        } else if (primitive == byte.class) {
+            return wrap.cast((byte) val);
+        }
+        throw new ClassCastException("Cannot cast short to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, byte val) {
+        if (primitive == byte.class) {
+            return (T) (Byte) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast byte to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == char.class) {
+            return wrap.cast((char) val);
+        } else if (primitive == float.class) {
+            return wrap.cast((float) val);
+        } if (primitive == double.class) {
+            return wrap.cast((double) val);
+        } else if (primitive == int.class) {
+            return wrap.cast((int) val);
+        } else if (primitive == short.class) {
+            return wrap.cast((short) val);
+        } else if (primitive == long.class) {
+            return wrap.cast((long) val);
+        }
+        throw new ClassCastException("Cannot cast byte to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, float val) {
+        if (primitive == float.class) {
+            return (T) (Float) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast float to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == char.class) {
+            return wrap.cast((char) val);
+        } else if (primitive == long.class) {
+            return wrap.cast((long) val);
+        } if (primitive == double.class) {
+            return wrap.cast((double) val);
+        } else if (primitive == int.class) {
+            return wrap.cast((int) val);
+        } else if (primitive == short.class) {
+            return wrap.cast((short) val);
+        } else if (primitive == byte.class) {
+            return wrap.cast((byte) val);
+        }
+        throw new ClassCastException("Cannot cast float to " + primitive.getName());
+    }
+
+    public static <T> T rawPrimitiveMapping(Class<T> primitive, double val) {
+        if (primitive == double.class) {
+            return (T) (Double) val;
+        }
+        if (primitive == boolean.class) {
+            throw new ClassCastException("Cannot cast double to " + primitive.getName());
+        }
+        Class<T> wrap = Primitives.wrap(primitive);
+        if (primitive == char.class) {
+            return wrap.cast((char) val);
+        } else if (primitive == float.class) {
+            return wrap.cast((float) val);
+        } if (primitive == long.class) {
+            return wrap.cast((long) val);
+        } else if (primitive == int.class) {
+            return wrap.cast((int) val);
+        } else if (primitive == short.class) {
+            return wrap.cast((short) val);
+        } else if (primitive == byte.class) {
+            return wrap.cast((byte) val);
+        }
+        throw new ClassCastException("Cannot cast double to " + primitive.getName());
     }
 
     /**
