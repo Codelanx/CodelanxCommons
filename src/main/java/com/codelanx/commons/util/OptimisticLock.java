@@ -11,6 +11,23 @@ import java.util.function.Supplier;
 
 public class OptimisticLock extends StampedLock {
 
+    public enum Optimism {
+        NONE, //never try an optimistic lock, effectively making this a hard StampedLock implementation     |even RW
+        TRY_ONCE, //try optimistic once, and switch to a hardstamped lock on failure                        |unbalanced
+        RETRY, //continue optimistic reads until success                                                    |unbal R++,W
+        ;
+    }
+
+    private final Optimism opt;
+
+    public OptimisticLock() {
+        this(Optimism.TRY_ONCE);
+    }
+
+    public OptimisticLock(Optimism opt) {
+        this.opt = opt;
+    }
+
     public <R> R operate(Function<StampedLock, Long> type, BiConsumer<StampedLock, Long> release, Function<Long, R> operation) {
         return StampLocks.operate(this, type, release, operation);
     }
@@ -68,6 +85,14 @@ public class OptimisticLock extends StampedLock {
 
     public void writeIf(Supplier<Boolean> read, Runnable write) {
         StampLocks.writeIf(this, read, write);
+    }
+
+    public <T, R> R writeWith(T value, Function<T, R> writer) {
+        return this.write(() -> writer.apply(value));
+    }
+
+    public <T, R> R readWith(T value, Function<T, R> writer) {
+        return this.write(() -> writer.apply(value));
     }
 
     private <R> R readThenWrite(Supplier<R> read, Consumer<R> write) {

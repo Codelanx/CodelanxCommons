@@ -165,6 +165,43 @@ public final class Parallel {
             });
         }
 
+        public static <R> R unfolded(StampedLock lock, Supplier<R> read, Predicate<R> writeIf, Consumer<R> write) {
+            R back;
+            long stamp = lock.tryOptimisticRead();
+            R val = stamp == 0 ? null : read.get();
+            if (stamp == 0 || !lock.validate(stamp)) {
+                stamp = lock.readLock();
+                try {
+                    R fval = read.get();
+                    if (writeIf.test(fval)) {
+                        //do write operation
+                        stamp = lock.tryConvertToWriteLock(stamp);
+                        if (stamp == 0) {
+                            stamp = lock.writeLock();
+                        }
+                        write.accept(fval);
+                    }
+                    return fval;
+                } finally {
+                    lock.unlock(stamp);
+                }
+            }
+            try {
+                R fval = val;
+                if (writeIf.test(fval)) {
+                    //do write operation
+                    stamp = lock.tryConvertToWriteLock(stamp);
+                    if (stamp == 0) {
+                        stamp = lock.writeLock();
+                    }
+                    write.accept(fval);
+                }
+                return fval;
+            } finally {
+                lock.unlock(stamp);
+            }
+        }
+
         public static <R> R readThenWrite(StampedLock lock, Supplier<R> read, Consumer<R> write) {
             return StampLocks.readThenWrite(lock, read, r -> true, write);
         }
